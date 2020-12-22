@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import thunk from 'redux-thunk';
 
 import Counter from './Counter';
+import Lobby from "./Lobby"
 import { INCREMENT, DECREMENT, RESET, GET_TODOS } from "./actions";
 
 
@@ -52,7 +53,7 @@ store.dispatch({ type: "INCREMENT" });
 
 const App = () => (
   <Provider store={store}>
-    <Counter/>
+    <Lobby/>
   </Provider>
 );
 
