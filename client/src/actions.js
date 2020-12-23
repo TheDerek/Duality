@@ -25,6 +25,12 @@ function convertToTodos(todoJson) {
   return todoJson.map(json => json.title);
 }
 
+export function createGame() {
+  return dispatch => {
+
+  }
+}
+
 export function getTodos() {
   return dispatch => {
     return fetch('https://jsonplaceholder.typicode.com/todos/')

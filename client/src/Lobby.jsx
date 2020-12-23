@@ -1,11 +1,16 @@
 import React from 'react';
 
 class Lobby extends React.Component {
+  NAME_MIN_LENGTH = 2;
+  NAME_MAX_LENGTH = 10;
+  PLAYER_NAME_REGEX = /^[a-zA-z0-9\s]+$/;
+
   constructor(props) {
     super(props);
     this.state = {
       playerName: "",
-      roomCode: ""
+      roomCode: "",
+      errors: []
     };
   }
 
@@ -23,23 +28,57 @@ class Lobby extends React.Component {
     event.preventDefault();
   };
 
+  validateForm(validateRoomCode) {
+    const playerName = this.state.playerName;
+    let errors = [];
+
+    console.log("Validating playerName=" + playerName);
+
+    if (playerName.length < this.NAME_MIN_LENGTH) {
+      errors.push(`Please enter a name longer than or equal to ${this.NAME_MIN_LENGTH} characters`);
+    }
+
+    if (playerName.length > this.NAME_MAX_LENGTH) {
+      errors.push(`Please enter a name shorter than or equal to ${this.NAME_MAX_LENGTH} characters`);
+    }
+
+    if (playerName.length > 0 && !playerName.match(this.PLAYER_NAME_REGEX)) {
+      errors.push('Please enter a name containing only ASCII letters, numbers and spaces');
+    }
+
+    this.setState({
+      ...this.state,
+      errors: errors
+    });
+
+    return errors.length < 1;
+  }
+
   handleCreatePrivateGame = (event) => {
     event.preventDefault();
 
-    console.log("Creating private game");
+    if (!this.validateForm(false)) {
+      return;
+    }
+
+    console.log("Successfully validated, creating game");
   };
 
   render() {
+    let errorDisplay = null;
+    if (this.state.errors.length > 0) {
+      errorDisplay = <Errors errors={this.state.errors}/>;
+    }
     return (
       <div className="container">
         <div className="card mt-3">
-          <h1 className="card-header">Boss Fight</h1>
+          <h1 className="card-header">In the know</h1>
           <div className="card-body">
+            {errorDisplay}
             <form onSubmit={this.handleDummySubmit}>
               <div className="mb-4">
                 <label className="form-label">Player Name</label>
                 <input
-                  required
                   name="playerName"
                   value={this.state.playerName}
                   onChange={this.handleChange}
@@ -64,39 +103,33 @@ class Lobby extends React.Component {
                 </div>
               </div>
               <hr/>
-              <div className="row mt-4 mb-1">
-                <div className="col text-center">
-                  <div className="d-grid">
-                    <button
-                      className="btn btn-primary">
-                      Create public game
-                    </button>
-                  </div>
-                </div>
-                <div className="col text-center">
-                  <div className="d-grid">
-                    <button
-                      onClick={this.handleCreatePrivateGame}
-                      className="btn btn-outline-secondary btn-block">
-                      Create private game
-                    </button>
-                  </div>
+              <div className="text-center">
+                <div className="d-grid">
+                  <button
+                    onClick={this.handleCreatePrivateGame}
+                    className="btn btn-primary btn-block">
+                    Create new game
+                  </button>
                 </div>
               </div>
             </form>
           </div>
         </div>
-        <div className="card mt-3">
-          <h3 className="card-header">Active games</h3>
-          <ul className="list-group list-group-flush">
-            <li className="list-group-item">Cras justo odio</li>
-            <li className="list-group-item">Dapibus ac facilisis in</li>
-            <li className="list-group-item">Vestibulum at eros</li>
-          </ul>
-        </div>
       </div>
     );
   }
+}
+
+function Errors(props) {
+  return (
+    <div className="alert alert-warning">
+      <ul className="mb-0">
+        {
+          props.errors.map((error, i) => <li key={i}>{error}</li>)
+        }
+      </ul>
+    </div>
+  );
 }
 
 export default Lobby;
