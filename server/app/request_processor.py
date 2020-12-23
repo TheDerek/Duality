@@ -49,3 +49,14 @@ def on_create_game(client: WebClient, request: dict):
 def join_game(client: WebClient, request: dict):
     user = users[client]
     user.name = request["playerName"]
+
+    code = request["gameCode"]
+
+    if code not in games:
+        # TODO Send back game does not exist response
+        print(f"{user.name} attempted to join game {code}, which does not exist")
+        return
+
+    game = games[code]
+    game.add_player(user)
+    print(f"Player {user.name} joined game {code}")

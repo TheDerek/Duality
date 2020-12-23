@@ -35,6 +35,15 @@ export function createGame(playerName) {
   });
 }
 
+export function joinGame(playerName, gameCode) {
+  return send({
+    joinGame: {
+      playerName: playerName,
+      gameCode: gameCode
+    }
+  });
+}
+
 export function getTodos() {
   return dispatch => {
     return fetch('https://jsonplaceholder.typicode.com/todos/')

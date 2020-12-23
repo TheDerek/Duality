@@ -1,17 +1,18 @@
 import React from 'react';
-import {createGame} from "./actions";
+import {createGame,joinGame} from "./actions";
 import {connect} from "react-redux";
 
 class Lobby extends React.Component {
   NAME_MIN_LENGTH = 2;
   NAME_MAX_LENGTH = 10;
-  PLAYER_NAME_REGEX = /^[a-zA-z0-9\s]+$/;
+  PLAYER_NAME_REGEX = /^[a-zA-Z0-9\s]+$/;
+  ROOM_CODE_REGEX = /^[A-Z0-9]{5}$/;
 
   constructor(props) {
     super(props);
     this.state = {
       playerName: "",
-      roomCode: "",
+      gameCode: "",
       errors: [],
       formDisabled: false,
       alert: ""
@@ -32,8 +33,9 @@ class Lobby extends React.Component {
     event.preventDefault();
   };
 
-  validateForm(validateRoomCode) {
+  validateForm(validategameCode) {
     const playerName = this.state.playerName;
+    const gameCode = this.state.gameCode;
     let errors = [];
 
     console.log("Validating playerName=" + playerName);
@@ -49,6 +51,11 @@ class Lobby extends React.Component {
     if (playerName.length > 0 && !playerName.match(this.PLAYER_NAME_REGEX)) {
       errors.push('Please enter a name containing only ASCII letters, numbers and spaces');
     }
+
+    if (validategameCode && !gameCode.match(this.ROOM_CODE_REGEX)) {
+      errors.push("Invalid room code");
+    }
+
 
     this.setState({
       ...this.state,
@@ -74,6 +81,24 @@ class Lobby extends React.Component {
 
     console.log("Successfully validated, creating game");
     this.props.createGame(this.state.playerName);
+  };
+
+  handleJoinGame = (event) => {
+    event.preventDefault();
+
+    if (!this.validateForm(true)) {
+      return;
+    }
+
+    this.setState({
+      ...this.state,
+      errors: [],
+      formDisabled: true,
+      alert: `Joining game ${this.state.gameCode}...`
+    });
+
+    console.log("Successfully validated, joining game", this.state.gameCode);
+    this.props.joinGame(this.state.playerName, this.state.gameCode);
   };
 
   render() {
@@ -106,17 +131,18 @@ class Lobby extends React.Component {
                   placeholder="Mr. Woshy" />
               </div>
               <div className="mt-4 mb-4">
-                <label className="form-label">Room Code</label>
+                <label className="form-label">Game Code</label>
                 <div className="input-group mb-3">
                   <input
-                    name="roomCode"
-                    value={this.state.roomCode}
+                    name="gameCode"
+                    value={this.state.gameCode}
                     onChange={this.handleChange}
                     disabled={this.state.formDisabled}
                     type="text"
                     className="form-control"
                     placeholder="BIGBAL" />
                   <button
+                    onClick={this.handleJoinGame}
                     disabled={this.state.formDisabled}
                     className="btn btn-secondary">
                     Join game
@@ -169,7 +195,8 @@ function mapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  createGame
+  createGame,
+  joinGame
 };
 
 export default connect(mapStateToProps,mapDispatchToProps)(Lobby);
