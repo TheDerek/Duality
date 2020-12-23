@@ -1,15 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom'
-import { createStore, applyMiddleware } from "redux";
+import { createStore, applyMiddleware, compose } from "redux";
 import { Provider } from "react-redux";
 import thunk from 'redux-thunk';
+import reduxWebsocket from '@giantmachines/redux-websocket';
+import { connect } from '@giantmachines/redux-websocket';
+
 import Lobby from "./Lobby"
 import { INCREMENT, DECREMENT, RESET, GET_TODOS } from "./actions";
 
+const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
 
 const initialState = {
   count: 0,
-  todos: []
+  todos: [],
+  connected: false
 };
 
 function reducer(state = initialState, action) {
@@ -33,21 +38,32 @@ function reducer(state = initialState, action) {
         ...state,
         todos: action.todos
       };
+    case 'REDUX_WEBSOCKET::CLOSED':
+      return {
+        ...state,
+        connected: false
+      };
+    case 'REDUX_WEBSOCKET::OPEN':
+      return {
+        ...state,
+        connected: true
+      };
     default:
       return state;
   }
 }
 
+const reduxWebsocketMiddleware = reduxWebsocket({
+  reconnectOnClose: true,
+});
+
 const store = createStore(
   reducer,
-  applyMiddleware(thunk)
+  applyMiddleware(thunk, reduxWebsocketMiddleware)
 );
 
-store.dispatch({ type: "INCREMENT" });
-store.dispatch({ type: "INCREMENT" });
-store.dispatch({ type: "DECREMENT" });
-store.dispatch({ type: "RESET" });
-store.dispatch({ type: "INCREMENT" });
+
+store.dispatch(connect(WEBSOCKET_ADDRESS));
 
 const App = () => (
   <Provider store={store}>

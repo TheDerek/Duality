@@ -1,3 +1,5 @@
+import { send } from '@giantmachines/redux-websocket';
+
 export const INCREMENT = "INCREMENT";
 export const DECREMENT = "DECREMENT";
 export const RESET = "RESET";
@@ -25,10 +27,12 @@ function convertToTodos(todoJson) {
   return todoJson.map(json => json.title);
 }
 
-export function createGame() {
-  return dispatch => {
-
-  }
+export function createGame(playerName) {
+  return send({
+    createGame: {
+      playerName: playerName
+    }
+  });
 }
 
 export function getTodos() {

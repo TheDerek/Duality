@@ -2,16 +2,21 @@
 
 # WS server example that synchronizes state across clients
 
-import functools
 import asyncio
+import functools
 import json
 import logging
+
 import websockets
+from app.request_processor import dispatcher as request_dispatcher
+
+
+class Game:
+    def __init__(self):
+        pass
+
 
 logging.basicConfig()
-
-STATE = {"value": 0}
-USERS = set()
 
 
 def log_call(fn):
@@ -23,59 +28,17 @@ def log_call(fn):
     return logged
 
 
-@log_call
-def state_event():
-    return json.dumps({"type": "state", **STATE})
-
-
-@log_call
-def users_event():
-    return json.dumps({"type": "users", "count": len(USERS)})
-
-
-@log_call
-async def notify_state():
-    if USERS:  # asyncio.wait doesn't accept an empty list
-        message = state_event()
-        await asyncio.wait([user.send(message) for user in USERS])
-
-
-@log_call
-async def notify_users():
-    if USERS:  # asyncio.wait doesn't accept an empty list
-        message = users_event()
-        await asyncio.wait([user.send(message) for user in USERS])
-
-
-@log_call
-async def register(websocket):
-    USERS.add(websocket)
-    await notify_users()
-
-
-@log_call
-async def unregister(websocket):
-    USERS.remove(websocket)
-    await notify_users()
-
-
 async def counter(websocket, path):
-    # register(websocket) sends user_event() to websocket
-    await register(websocket)
+    request_dispatcher.on_client_connected_func(websocket)
     try:
-        await websocket.send(state_event())
         async for message in websocket:
-            data = json.loads(message)
-            if data["action"] == "minus":
-                STATE["value"] -= 1
-                await notify_state()
-            elif data["action"] == "plus":
-                STATE["value"] += 1
-                await notify_state()
-            else:
-                logging.error("unsupported event: {}", data)
+            print("Received message:", message)
+            request = json.loads(message)
+            name, data = next(iter(request.items()))
+            request_dispatcher.requests[name](websocket, data)
+
     finally:
-        await unregister(websocket)
+        request_dispatcher.on_client_closed_func(websocket)
 
 
 start_server = websockets.serve(counter, "localhost", 6789)

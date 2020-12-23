@@ -1,4 +1,6 @@
 import React from 'react';
+import {createGame} from "./actions";
+import {connect} from "react-redux";
 
 class Lobby extends React.Component {
   NAME_MIN_LENGTH = 2;
@@ -10,7 +12,9 @@ class Lobby extends React.Component {
     this.state = {
       playerName: "",
       roomCode: "",
-      errors: []
+      errors: [],
+      formDisabled: false,
+      alert: ""
     };
   }
 
@@ -61,7 +65,15 @@ class Lobby extends React.Component {
       return;
     }
 
+    this.setState({
+      ...this.state,
+      errors: [],
+      formDisabled: true,
+      alert: "Creating game..."
+    });
+
     console.log("Successfully validated, creating game");
+    this.props.createGame(this.state.playerName);
   };
 
   render() {
@@ -69,11 +81,17 @@ class Lobby extends React.Component {
     if (this.state.errors.length > 0) {
       errorDisplay = <Errors errors={this.state.errors}/>;
     }
+
+    let alert = null;
+    if (this.state.alert) {
+      alert = <Alert text={this.state.alert}/>;
+    }
     return (
       <div className="container">
         <div className="card mt-3">
           <h1 className="card-header">In the know</h1>
           <div className="card-body">
+            {alert}
             {errorDisplay}
             <form onSubmit={this.handleDummySubmit}>
               <div className="mb-4">
@@ -82,6 +100,7 @@ class Lobby extends React.Component {
                   name="playerName"
                   value={this.state.playerName}
                   onChange={this.handleChange}
+                  disabled={this.state.formDisabled}
                   type="text"
                   className="form-control"
                   placeholder="Mr. Woshy" />
@@ -93,10 +112,12 @@ class Lobby extends React.Component {
                     name="roomCode"
                     value={this.state.roomCode}
                     onChange={this.handleChange}
+                    disabled={this.state.formDisabled}
                     type="text"
                     className="form-control"
                     placeholder="BIGBAL" />
                   <button
+                    disabled={this.state.formDisabled}
                     className="btn btn-secondary">
                     Join game
                   </button>
@@ -107,6 +128,7 @@ class Lobby extends React.Component {
                 <div className="d-grid">
                   <button
                     onClick={this.handleCreatePrivateGame}
+                    disabled={this.state.formDisabled}
                     className="btn btn-primary btn-block">
                     Create new game
                   </button>
@@ -132,4 +154,22 @@ function Errors(props) {
   );
 }
 
-export default Lobby;
+function Alert(props) {
+  return (
+    <div className="alert alert-primary">
+      {props.text}
+    </div>
+  )
+}
+
+function mapStateToProps() {
+  return {
+
+  }
+}
+
+const mapDispatchToProps = {
+  createGame
+};
+
+export default connect(mapStateToProps,mapDispatchToProps)(Lobby);
