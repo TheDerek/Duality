@@ -14,7 +14,9 @@ const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
 const initialState = {
   count: 0,
   todos: [],
-  connected: false
+  connected: false,
+  // One of NORMAL, ERRORED, JOINING_GAME or CREATING_GAME
+  lobbyStatus: "NORMAL"
 };
 
 function reducer(state = initialState, action) {
@@ -48,6 +50,10 @@ function reducer(state = initialState, action) {
         ...state,
         connected: true
       };
+    case 'REDUX_WEBSOCKET::MESSAGE':
+      let data = JSON.parse(action.payload.message);
+      console.log("Got data from websocket", data);
+      return state;
     default:
       return state;
   }
