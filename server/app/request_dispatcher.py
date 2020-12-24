@@ -12,11 +12,11 @@ class RequestDispatcher:
         self.on_client_connected_func = None
         self.on_client_closed_func = None
 
-    async def add_to_message_queue(self, message: dict, client: WebClient):
+    async def add_to_message_queue(self, client: WebClient, message: dict):
         await self.queues[client].put(message)
 
-    def get_message(self, client: WebClient):
-        return self.queues[client].get()
+    async def get_message(self, client: WebClient):
+        return await self.queues[client].get()
 
     def request(self, name: str):
         def func(request_func):

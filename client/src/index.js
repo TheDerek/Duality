@@ -6,54 +6,63 @@ import thunk from 'redux-thunk';
 import reduxWebsocket from '@giantmachines/redux-websocket';
 import { connect } from '@giantmachines/redux-websocket';
 
-import Lobby from "./Lobby"
-import { INCREMENT, DECREMENT, RESET, GET_TODOS } from "./actions";
+import App from "./App"
+import { GAME_STATES } from "./App";
+import { LOBBY_STATUS, REPORT_LOBBY_STATUS } from "./actions";
 
 const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
 
 const initialState = {
-  count: 0,
-  todos: [],
-  connected: false,
-  // One of NORMAL, ERRORED, JOINING_GAME or CREATING_GAME
-  lobbyStatus: "NORMAL"
+  gameState: GAME_STATES.LOBBY,
+  lobby: {
+    status: LOBBY_STATUS.NORMAL,
+    errors: []
+  }
 };
+
+function messageReducer(state, name, data) {
+  switch(name) {
+    case "noGameFound": {
+      const code = data.gameCode;
+      return {
+        ...state,
+        lobby: {
+          status: LOBBY_STATUS.ERRORED,
+          errors: [`Could not find game with code ${code}`]
+        }
+      };
+    }
+    case "joinGame": {
+      const code = data.gameCode;
+      return {
+        ...state,
+        gameState: GAME_STATES.WAITING_ROOM
+      };
+    }
+    default:
+      return state;
+  }
+}
 
 function reducer(state = initialState, action) {
   console.log('reducer', state, action);
 
   switch(action.type) {
-    case INCREMENT:
+    case REPORT_LOBBY_STATUS:
+      console.log("Setting lobby status");
       return {
         ...state,
-        count: state.count + 1
-      };
-    case DECREMENT:
-      return {
-        ...state,
-        count: state.count - 1
-      };
-    case RESET:
-      return initialState;
-    case GET_TODOS:
-      return {
-        ...state,
-        todos: action.todos
-      };
-    case 'REDUX_WEBSOCKET::CLOSED':
-      return {
-        ...state,
-        connected: false
-      };
-    case 'REDUX_WEBSOCKET::OPEN':
-      return {
-        ...state,
-        connected: true
+        lobby: {
+          status: action.status,
+          errors: action.errors
+        }
       };
     case 'REDUX_WEBSOCKET::MESSAGE':
-      let data = JSON.parse(action.payload.message);
+      const data = JSON.parse(action.payload.message);
+      const name = Object.keys(data)[0];
       console.log("Got data from websocket", data);
-      return state;
+
+      return messageReducer(state, name, data[name]);
     default:
       return state;
   }
@@ -71,15 +80,11 @@ const store = createStore(
 
 store.dispatch(connect(WEBSOCKET_ADDRESS));
 
-const App = () => (
-  <Provider store={store}>
-    <Lobby/>
-  </Provider>
-);
-
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}>
+      <App />
+    </Provider>
   </React.StrictMode>,
   document.getElementById('root')
 );

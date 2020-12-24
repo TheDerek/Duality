@@ -46,6 +46,12 @@ async def on_create_game(client: WebClient, request: dict):
     games[code] = game
     print(f"Created game {code} with admin {user.name}")
 
+    await dispatcher.add_to_message_queue(client, {
+        "joinGame": {
+            "gameCode": code
+        }
+    })
+
 
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
@@ -57,13 +63,20 @@ async def join_game(client: WebClient, request: dict):
     if code not in games:
         # TODO Send back game does not exist response
         print(f"{user.name} attempted to join game {code}, which does not exist")
-        await dispatcher.add_to_message_queue({
+        await dispatcher.add_to_message_queue(client, {
             "noGameFound": {
                 "gameCode": code
             }
-        }, client)
+        })
         return
 
     game = games[code]
     game.add_player(user)
     print(f"Player {user.name} joined game {code}")
+
+    await dispatcher.add_to_message_queue(client, {
+        "joinGame": {
+            "gameCode": code
+        }
+    })
+
