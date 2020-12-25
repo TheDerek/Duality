@@ -1,5 +1,12 @@
 import React from "react";
 import {connect} from "react-redux";
+import {createGame, joinGame, reportLobbyStatus} from "./actions";
+
+function Player(props) {
+  return (
+    <li className="list-group-item" key={props.key}>{props.name}</li>
+  )
+}
 
 class WaitingRoom extends React.Component {
   constructor(props) {
@@ -8,11 +15,59 @@ class WaitingRoom extends React.Component {
 
   render() {
     return (
-      <div>
-        Waiting room!
+      <div className="container">
+        <div className="card mt-3">
+          <div className="card-header">
+            <div className="float-start">
+              Waiting room
+            </div>
+            <div className="float-end">
+              <em className="text-right">Game code: {this.props.gameCode}</em>
+            </div>
+            <div className="clearfix"/>
+          </div>
+          <div className="card-body">
+            <h4 className="card-title">In the know</h4>
+            <p className="card-text">
+              The fun party game in which you test your friends knowledge and try
+              to predict their responses!
+            </p>
+          </div>
+          {/*<div className="card-header">Conencted Players</div>*/}
+          <ul className="list-group list-group-flush">
+            <li className="list-group-item list-group-item-secondary">
+              <b>Connected players</b>
+            </li>
+            {
+              this.props.players.map((player, i) =>
+                <Player key={i} name={player.name}/>
+              )
+            }
+          </ul>
+          <div className="card-footer">
+            <div className="d-grid">
+              <button
+                className="btn btn-primary btn-block">
+                Start Game
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 }
 
-export default connect()(WaitingRoom);
+function mapStateToProps(state) {
+  return {
+    players: state.waitingRoom.players,
+    gameCode: state.waitingRoom.gameCode,
+    admin: state.waitingRoom.admin
+  }
+}
+
+const mapDispatchToProps = {
+
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(WaitingRoom);

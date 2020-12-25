@@ -6,6 +6,7 @@ import thunk from 'redux-thunk';
 import reduxWebsocket from '@giantmachines/redux-websocket';
 import { connect } from '@giantmachines/redux-websocket';
 
+import './index.css'
 import App from "./App"
 import { GAME_STATES } from "./App";
 import { LOBBY_STATUS, REPORT_LOBBY_STATUS } from "./actions";
@@ -13,10 +14,20 @@ import { LOBBY_STATUS, REPORT_LOBBY_STATUS } from "./actions";
 const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
 
 const initialState = {
-  gameState: GAME_STATES.LOBBY,
+  gameState: GAME_STATES.WAITING_ROOM,
   lobby: {
     status: LOBBY_STATUS.NORMAL,
     errors: []
+  },
+  waitingRoom: {
+    players: [
+      {name: "Woshy", admin: false, player: false},
+      {name: "Derek", admin: false, player: true},
+      {name: "Pablobs", admin: false, player: false},
+      {name: "Franco", admin: false, player: false}
+    ],
+    admin: false,
+    gameCode: "XPD12"
   }
 };
 
