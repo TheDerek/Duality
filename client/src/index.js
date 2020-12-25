@@ -14,20 +14,17 @@ import { LOBBY_STATUS, REPORT_LOBBY_STATUS } from "./actions";
 const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
 
 const initialState = {
-  gameState: GAME_STATES.WAITING_ROOM,
+  gameState: GAME_STATES.LOBBY,
   lobby: {
     status: LOBBY_STATUS.NORMAL,
     errors: []
   },
   waitingRoom: {
     players: [
-      {name: "Woshy", admin: false, player: false},
-      {name: "Derek", admin: false, player: true},
-      {name: "Pablobs", admin: false, player: false},
-      {name: "Franco", admin: false, player: false}
+
     ],
     admin: false,
-    gameCode: "XPD12"
+    gameCode: "NULL"
   }
 };
 
@@ -44,10 +41,23 @@ function messageReducer(state, name, data) {
       };
     }
     case "joinGame": {
-      const code = data.gameCode;
       return {
         ...state,
-        gameState: GAME_STATES.WAITING_ROOM
+        gameState: GAME_STATES.WAITING_ROOM,
+        waitingRoom: data
+      };
+    }
+    case "playerJoinedGame": {
+      return {
+        ...state,
+        gameState: GAME_STATES.WAITING_ROOM,
+        waitingRoom: {
+          ...state.waitingRoom,
+          players: [
+            ...state.waitingRoom.players,
+            data.player
+          ]
+        }
       };
     }
     default:

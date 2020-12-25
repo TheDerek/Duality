@@ -3,8 +3,23 @@ import {connect} from "react-redux";
 import {createGame, joinGame, reportLobbyStatus} from "./actions";
 
 function Player(props) {
+  let listClass = "list-group-item";
+  let badge = null;
+
+  if (props.player.currentPlayer) {
+    listClass += " list-group-item-primary";
+  }
+
+  if (props.player.admin) {
+    listClass += " d-flex justify-content-between align-items-center";
+    badge = <span className="badge bg-primary rounded-pill">Admin</span>;
+  }
+
   return (
-    <li className="list-group-item" key={props.key}>{props.name}</li>
+    <li className={listClass}>
+      { props.player.name }
+      { badge }
+    </li>
   )
 }
 
@@ -15,7 +30,7 @@ class WaitingRoom extends React.Component {
 
   render() {
     return (
-      <div className="container">
+      <div className="container-sm">
         <div className="card mt-3">
           <div className="card-header">
             <div className="float-start">
@@ -40,7 +55,7 @@ class WaitingRoom extends React.Component {
             </li>
             {
               this.props.players.map((player, i) =>
-                <Player key={i} name={player.name}/>
+                <Player key={i} player={player}/>
               )
             }
           </ul>
