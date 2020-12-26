@@ -7,54 +7,39 @@ from websockets.server import WebSocketServerProtocol
 from app.game import Game
 from app.user import User
 from app.request_dispatcher import RequestDispatcher
+from app.store import Store
 
 WebClient = WebSocketServerProtocol
 
 dispatcher = RequestDispatcher()
-
-users: Dict[WebClient, User] = {}
-games: Dict[str, Game] = {}
+store = Store()
 
 
 @dispatcher.on_client_connected
 async def on_client_connected(web_client: WebClient):
     print(f"newClient={web_client}")
-    users[web_client] = User(web_client)
+    store.add_user(web_client)
 
 
 @dispatcher.on_client_closed
 async def on_client_closed(web_client: WebClient):
     print(f"clientClosed={web_client}")
-    user = users[web_client]
-
-    if user.current_game:
-        if len(user.current_game.players) == 1:
-            print(
-                f"Deleting game {user.current_game.code} because the last player has left"
-            )
-            del games[user.current_game.code]
-
-    del users[web_client]
+    store.remove_user(web_client)
 
 
 @dispatcher.request("createGame")
 async def on_create_game(client: WebClient, request: dict):
-    # await asyncio.sleep(2)
+    user = store.get_user(client)
+    user = store.modify_user(user, name=request["playerName"])
 
-    user = users[client]
-    user.name = request["playerName"]
-
-    code = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
-    game = Game(code, user)
-
-    games[code] = game
-    print(f"Created game {code} with admin {user.name}")
+    game = store.create_game(user)
+    print(f"Created game {game.code} with admin {game.admin.name}")
 
     await dispatcher.add_to_message_queue(
         client,
         {
             "joinGame": {
-                "gameCode": code,
+                "gameCode": game.code,
                 "players": game.get_players_response(user),
                 "admin": True
             }
@@ -64,14 +49,14 @@ async def on_create_game(client: WebClient, request: dict):
 
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
-    # await asyncio.sleep(2)
-
-    user = users[client]
-    user.name = request["playerName"]
+    user = store.get_user(client)
+    user = store.modify_user(user, name=request["playerName"])
 
     code = request["gameCode"]
 
-    if code not in games:
+    game = store.get_game(code)
+
+    if game is None:
         # TODO Send back game does not exist response
         print(f"{user.name} attempted to join game {code}, which does not exist")
         await dispatcher.add_to_message_queue(
@@ -79,8 +64,7 @@ async def join_game(client: WebClient, request: dict):
         )
         return
 
-    game = games[code]
-    game.add_player(user)
+    player, game = store.add_player_to_game(user, game)
     print(f"Player {user.name} joined game {code}")
 
     # Inform the user he joined the game

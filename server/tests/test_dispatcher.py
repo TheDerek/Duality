@@ -1,9 +1,9 @@
 import asyncio
 import pytest
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from app.request_processor import dispatcher, users
+from app.request_processor import dispatcher
 from app.user import User
 
 
@@ -29,4 +29,3 @@ async def test_dispatcher_disconnect_user():
     await dispatcher.on_client_closed_func(client)
 
     assert len(users) == 0
-
