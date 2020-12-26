@@ -5,6 +5,7 @@ import {connect} from "react-redux";
 class Lobby extends React.Component {
   NAME_MIN_LENGTH = 2;
   NAME_MAX_LENGTH = 10;
+  GAME_CODE_LENGTH = 5;
   PLAYER_NAME_REGEX = /^[a-zA-Z0-9\s]+$/;
   ROOM_CODE_REGEX = /^[A-Z0-9]{5}$/;
 
@@ -19,12 +20,30 @@ class Lobby extends React.Component {
 
   handleChange = (event) => {
     const target = event.target;
-    const value = target.value;
     const name = target.name;
+    const value = target.value;
+
+    const startPos = target.selectionStart;
+
+    if (value && name === "gameCode" && !value.match(/^[a-zA-Z0-9]+$/i)) {
+      window.requestAnimationFrame(() => {
+        target.selectionStart = startPos - 1;
+        target.selectionEnd = startPos - 1;
+      });
+      return;
+    }
+
+    if (value && name === "playerName" && !value.match(this.PLAYER_NAME_REGEX)) {
+      window.requestAnimationFrame(() => {
+        target.selectionStart = startPos - 1;
+        target.selectionEnd = startPos - 1;
+      });
+      return;
+    }
 
     this.setState({
       [name]: value
-    })
+    });
   };
 
   handleDummySubmit = (event) => {
@@ -32,8 +51,8 @@ class Lobby extends React.Component {
   };
 
   validateForm(validateGameCode) {
-    const playerName = this.state.playerName;
-    const gameCode = this.state.gameCode;
+    const playerName = this.state.playerName.trim();
+    const gameCode = this.state.gameCode.toUpperCase();
     let errors = [];
 
     console.log("Validating playerName=" + playerName);
@@ -51,7 +70,7 @@ class Lobby extends React.Component {
     }
 
     if (validateGameCode && !gameCode.match(this.ROOM_CODE_REGEX)) {
-      errors.push("Invalid room code");
+      errors.push("Invalid game code");
     }
 
     let errored = errors.length > 0;
@@ -132,6 +151,7 @@ class Lobby extends React.Component {
                   value={this.state.playerName}
                   onChange={this.handleChange}
                   disabled={this.isFormDisabled()}
+                  maxLength={this.NAME_MAX_LENGTH}
                   type="text"
                   className="form-control"
                   placeholder="Mr. Woshy" />
@@ -144,8 +164,9 @@ class Lobby extends React.Component {
                     value={this.state.gameCode}
                     onChange={this.handleChange}
                     disabled={this.isFormDisabled()}
+                    maxLength={this.GAME_CODE_LENGTH}
                     type="text"
-                    className="form-control"
+                    className="form-control text-uppercase"
                     placeholder="BIGBAL" />
                   <button
                     onClick={this.handleJoinGame}
@@ -160,7 +181,7 @@ class Lobby extends React.Component {
                 <div className="d-grid">
                   <button
                     onClick={this.handleCreatePrivateGame}
-                    disabled={this.isFormDisabled()}
+                    disabled={this.isFormDisabled() || this.state.gameCode}
                     className="btn btn-primary btn-block">
                     Create new game
                   </button>

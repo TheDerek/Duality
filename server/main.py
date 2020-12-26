@@ -8,8 +8,9 @@ import json
 import logging
 
 import websockets
-from app.request_processor import dispatcher as request_dispatcher
 
+from app.request_processor import dispatcher as request_dispatcher
+from app.user import WebClient
 
 class Game:
     def __init__(self):
@@ -43,7 +44,7 @@ async def consumer_handler(websocket, path):
         await request_dispatcher.requests[name](websocket, data)
 
 
-async def handler(websocket, path):
+async def handler(websocket: WebClient, path: str):
     await request_dispatcher.on_client_connected_func(websocket)
     try:
         consumer_task = asyncio.ensure_future(consumer_handler(websocket, path))

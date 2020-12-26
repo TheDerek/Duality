@@ -11,6 +11,7 @@ from app.request_dispatcher import RequestDispatcher
 WebClient = WebSocketServerProtocol
 
 dispatcher = RequestDispatcher()
+
 users: Dict[WebClient, User] = {}
 games: Dict[str, Game] = {}
 
@@ -38,7 +39,7 @@ async def on_client_closed(web_client: WebClient):
 
 @dispatcher.request("createGame")
 async def on_create_game(client: WebClient, request: dict):
-    await asyncio.sleep(2)
+    # await asyncio.sleep(2)
 
     user = users[client]
     user.name = request["playerName"]
@@ -63,7 +64,7 @@ async def on_create_game(client: WebClient, request: dict):
 
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
-    await asyncio.sleep(2)
+    # await asyncio.sleep(2)
 
     user = users[client]
     user.name = request["playerName"]
