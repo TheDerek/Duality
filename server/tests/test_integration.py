@@ -8,8 +8,9 @@ from app.user import User
 
 
 @pytest.mark.asyncio
-@patch("app.request_processor.users")
 async def test_dispatcher_connect_user():
+    users.clear()
+
     client = MagicMock()
     await dispatcher.on_client_connected_func(client)
     assert client in users
