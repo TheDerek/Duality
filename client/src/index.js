@@ -29,13 +29,9 @@ const initialState = {
       gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE)
     }
   },
-  waitingRoom: {
-    players: [
-
-    ],
-    admin: false,
-    gameCode: "NULL"
-  },
+  players: [],
+  gameCode: "",
+  admin: false,
   currentPlayer: null
 };
 
@@ -55,11 +51,9 @@ function messageReducer(state, name, data) {
       return {
         ...state,
         gameState: GAME_STATES.WAITING_ROOM,
-        waitingRoom: {
-          players: data.players,
-          admin: data.admin,
-          gameCode: data.gameCode
-        },
+        players: data.players,
+        admin: data.admin,
+        gameCode: data.gameCode,
         currentPlayer: data.currentPlayer
       };
     }
@@ -67,13 +61,10 @@ function messageReducer(state, name, data) {
       return {
         ...state,
         gameState: GAME_STATES.WAITING_ROOM,
-        waitingRoom: {
-          ...state.waitingRoom,
-          players: [
-            ...state.waitingRoom.players,
-            data.player
-          ]
-        }
+        players: [
+          ...state.players,
+          data.player
+        ]
       };
     }
     default:

@@ -80,9 +80,9 @@ class WaitingRoom extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    players: state.waitingRoom.players,
-    gameCode: state.waitingRoom.gameCode,
-    admin: state.waitingRoom.admin,
+    players: state.players,
+    gameCode: state.gameCode,
+    admin: state.admin,
     currentPlayer: state.currentPlayer,
     minimumPlayers: state.minimumPlayers
   }
