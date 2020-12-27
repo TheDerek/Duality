@@ -146,7 +146,7 @@ class Lobby extends React.Component {
     return (
       <div className="container">
         <div className="card mt-3">
-          <h1 className="card-header">In the know</h1>
+          <div className="card-header">Lobby</div>
           <div className="card-body">
             {alert}
             {errorDisplay}

@@ -24,6 +24,8 @@ async def on_client_connected(web_client: WebClient):
 @dispatcher.on_client_closed
 async def on_client_closed(web_client: WebClient):
     print(f"clientClosed={web_client}")
+    user = store.get_user(web_client)
+
     store.remove_user(web_client)
 
 
@@ -50,11 +52,13 @@ async def on_create_game(client: WebClient, request: dict):
 
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
-    user = store.get_user(client)
-    user = store.modify_user(user, name=request["playerName"])
+    user, synced = store.get_or_sync_user(client, request["uuid"])
+
+    # Only modify the users name if they don't have one yet
+    if not user.name:
+        user = store.modify_user(user, name=request["playerName"])
 
     code = request["gameCode"]
-
     game = store.get_game(code)
 
     if game is None:
@@ -65,8 +69,11 @@ async def join_game(client: WebClient, request: dict):
         )
         return
 
-    player, game = store.add_player_to_game(user, game)
-    print(f"Player {user.name} joined game {code}")
+    new_join = user not in game.players
+
+    if new_join:
+        player, game = store.add_player_to_game(user, game)
+        print(f"Player {user.name} joined game {code}")
 
     # Inform the user he joined the game
     await dispatcher.add_to_message_queue(
@@ -80,6 +87,10 @@ async def join_game(client: WebClient, request: dict):
             }
         },
     )
+
+    # No need to do anything else if the user has been in the lobby previously
+    if not new_join:
+        return
 
     # Inform the other players in the game that someone has joined
     other_players = [player for player in game.players if player != user]
