@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom'
-import { createStore, applyMiddleware, compose } from "redux";
+import { createStore, applyMiddleware } from "redux";
 import { Provider } from "react-redux";
 import thunk from 'redux-thunk';
 import reduxWebsocket from '@giantmachines/redux-websocket';
@@ -9,15 +9,25 @@ import { connect } from '@giantmachines/redux-websocket';
 import './index.css'
 import App from "./App"
 import { GAME_STATES } from "./App";
-import { LOBBY_STATUS, REPORT_LOBBY_STATUS } from "./actions";
+import { LOBBY_STATUS, REPORT_LOBBY_STATUS} from "./actions";
+
+export const LOCAL_STORAGE_PLAYER_NAME = "playerNameValue";
+export const LOCAL_STORAGE_GAME_CODE = "gameCodeValue";
+export const LOCAL_STORAGE_UUID = "uuid";
 
 const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
 
 const initialState = {
+  uuid: localStorage.getItem(LOCAL_STORAGE_UUID),
+  minimumPlayers: 3,
   gameState: GAME_STATES.LOBBY,
   lobby: {
     status: LOBBY_STATUS.NORMAL,
-    errors: []
+    errors: [],
+    presetFormValues: {
+      name: localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME),
+      gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE)
+    }
   },
   waitingRoom: {
     players: [
@@ -45,8 +55,12 @@ function messageReducer(state, name, data) {
       return {
         ...state,
         gameState: GAME_STATES.WAITING_ROOM,
-        waitingRoom: data,
-        currentPlayer: data.players.find(p => p.currentPlayer)
+        waitingRoom: {
+          players: data.players,
+          admin: data.admin,
+          gameCode: data.gameCode
+        },
+        currentPlayer: data.currentPlayer
       };
     }
     case "playerJoinedGame": {
@@ -95,9 +109,27 @@ const reduxWebsocketMiddleware = reduxWebsocket({
   reconnectOnClose: true,
 });
 
+const gameMiddleware = storeAPI => next => action => {
+  // Save the players and game code for easy reconnecting
+  if (action.type === "REDUX_WEBSOCKET::MESSAGE") {
+    const data = JSON.parse(action.payload.message);
+    const name = Object.keys(data)[0];
+
+    if (name === "joinGame") {
+      let current_player = data.joinGame.currentPlayer;
+
+      localStorage.setItem(LOCAL_STORAGE_PLAYER_NAME, current_player.name);
+      localStorage.setItem(LOCAL_STORAGE_GAME_CODE, data.joinGame.gameCode);
+      localStorage.setItem(LOCAL_STORAGE_UUID, current_player.uuid)
+    }
+  }
+
+  return next(action);
+};
+
 const store = createStore(
   reducer,
-  applyMiddleware(thunk, reduxWebsocketMiddleware)
+  applyMiddleware(thunk, reduxWebsocketMiddleware, gameMiddleware)
 );
 
 

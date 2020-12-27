@@ -15,10 +15,6 @@ class App extends React.Component {
     [GAME_STATES.WAITING_ROOM]: <WaitingRoom/>
   };
 
-  constructor(props) {
-    super(props)
-  }
-
   getGameState() {
     return this.#gameStates[this.props.gameState];
   }

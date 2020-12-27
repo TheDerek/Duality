@@ -12,8 +12,8 @@ class Lobby extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      playerName: "",
-      gameCode: "",
+      playerName: this.props.presetValues.name,
+      gameCode: this.props.presetValues.gameCode,
       alert: ""
     };
   }
@@ -106,7 +106,7 @@ class Lobby extends React.Component {
     this.props.reportLobbyStatus(LOBBY_STATUS.JOINING_GAME);
 
     console.log("Successfully validated, joining game", this.state.gameCode);
-    this.props.joinGame(this.state.playerName, this.state.gameCode);
+    this.props.joinGame(this.state.playerName, this.state.gameCode, this.props.uuid);
   };
 
   getAlert() {
@@ -135,6 +135,13 @@ class Lobby extends React.Component {
     }
 
     let alert = this.getAlert();
+
+    let gameCodeWarning = null;
+    if (this.state.gameCode) {
+      gameCodeWarning = <p><em>
+        Please remove the game code in order to create a new game
+      </em></p>;
+    }
 
     return (
       <div className="container">
@@ -179,6 +186,7 @@ class Lobby extends React.Component {
               <hr/>
               <div className="text-center">
                 <div className="d-grid">
+                  { gameCodeWarning }
                   <button
                     onClick={this.handleCreatePrivateGame}
                     disabled={this.isFormDisabled() || this.state.gameCode}
@@ -218,7 +226,9 @@ function Alert(props) {
 function mapStateToProps(state) {
   return {
     errors: state.lobby.errors,
-    status: state.lobby.status
+    status: state.lobby.status,
+    presetValues: state.lobby.presetFormValues,
+    uuid: state.uuid
   }
 }
 

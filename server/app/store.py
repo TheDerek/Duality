@@ -29,13 +29,13 @@ class Store:
         return user
 
     def remove_user(self, client):
-        user = self.get_user(client)
-
-        if user.current_game and len(user.current_game.players) == 1:
-            print("Deleting game {} because the last user in the game {} has left".format(
-                user.current_game.code, user.name
-            ))
-            del self._games[user.current_game.code]
+        # user = self.get_user(client)
+        #
+        # if user.current_game and len(user.current_game.players) == 1:
+        #     print("Deleting game {} because the last user in the game {} has left".format(
+        #         user.current_game.code, user.name
+        #     ))
+        #     del self._games[user.current_game.code]
 
         del self._users[client]
 

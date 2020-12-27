@@ -1,10 +1,7 @@
 import { send } from '@giantmachines/redux-websocket';
 
-export const INCREMENT = "INCREMENT";
-export const DECREMENT = "DECREMENT";
-export const RESET = "RESET";
-export const GET_TODOS = "GET_TODOS";
 export const REPORT_LOBBY_STATUS = "REPORT_LOBBY_STATUS";
+export const SET_UUID = "SET_UUID";
 
 export const LOBBY_STATUS = {
   NORMAL: "NORMAL",
@@ -12,28 +9,6 @@ export const LOBBY_STATUS = {
   JOINING_GAME: "JOINING_GAME",
   CREATING_GAME: "CREATING_GAME"
 };
-
-export function increment() {
-  return {
-    type: INCREMENT
-  }
-}
-
-export function decrement() {
-  return {
-    type: DECREMENT
-  }
-}
-
-export function reset() {
-  return {
-    type: RESET
-  }
-}
-
-function convertToTodos(todoJson) {
-  return todoJson.map(json => json.title);
-}
 
 export function createGame(playerName) {
   return send({
@@ -43,11 +18,12 @@ export function createGame(playerName) {
   });
 }
 
-export function joinGame(playerName, gameCode) {
+export function joinGame(playerName, gameCode, uuid) {
   return send({
     joinGame: {
       playerName: playerName,
-      gameCode: gameCode
+      gameCode: gameCode,
+      uuid: uuid
     }
   });
 }
@@ -60,14 +36,18 @@ export function reportLobbyStatus(status, errors=[]) {
   }
 }
 
-export function getTodos() {
-  return dispatch => {
-    return fetch('https://jsonplaceholder.typicode.com/todos/')
-      .then(res => res.json())
-      .then(json => convertToTodos(json))
-      .then(todos => dispatch({
-        type: GET_TODOS,
-        todos: todos
-      }));
+export function setUuid() {
+  let uuid = localStorage.getItem("uuid");
+  if (uuid) {
+    return {
+      type: SET_UUID,
+      uuid: uuid
+    }
   }
+
+  return send({
+    generateUuid: {
+
+    }
+  })
 }

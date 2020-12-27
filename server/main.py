@@ -12,10 +12,6 @@ import websockets
 from app.request_processor import dispatcher as request_dispatcher
 from app.user import WebClient
 
-class Game:
-    def __init__(self):
-        pass
-
 
 logging.basicConfig()
 
@@ -41,7 +37,11 @@ async def consumer_handler(websocket, path):
         print("Received message:", message)
         request = json.loads(message)
         name, data = next(iter(request.items()))
-        await request_dispatcher.requests[name](websocket, data)
+
+        if name not in request_dispatcher.requests:
+            print(f"ERROR: No handler for {name} request")
+        else:
+            await request_dispatcher.requests[name](websocket, data)
 
 
 async def handler(websocket: WebClient, path: str):

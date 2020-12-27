@@ -41,7 +41,8 @@ async def on_create_game(client: WebClient, request: dict):
             "joinGame": {
                 "gameCode": game.code,
                 "players": game.get_players_response(user),
-                "admin": True
+                "admin": True,
+                "currentPlayer": user.join_game_json(user, include_uuid=True)
             }
         },
     )
@@ -74,7 +75,8 @@ async def join_game(client: WebClient, request: dict):
             "joinGame": {
                 "gameCode": code,
                 "players": game.get_players_response(user),
-                "admin": False
+                "admin": False,
+                "currentPlayer": user.join_game_json(user, include_uuid=True)
             }
         },
     )
