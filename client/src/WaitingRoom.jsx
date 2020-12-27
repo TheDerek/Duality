@@ -62,6 +62,7 @@ class WaitingRoom extends React.Component {
           <div className="card-footer">
             <div className="d-grid">
               <button
+                disabled={!this.props.currentPlayer.admin}
                 className="btn btn-primary btn-block">
                 Start Game
               </button>
@@ -77,7 +78,8 @@ function mapStateToProps(state) {
   return {
     players: state.waitingRoom.players,
     gameCode: state.waitingRoom.gameCode,
-    admin: state.waitingRoom.admin
+    admin: state.waitingRoom.admin,
+    currentPlayer: state.currentPlayer
   }
 }
 

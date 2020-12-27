@@ -25,7 +25,8 @@ const initialState = {
     ],
     admin: false,
     gameCode: "NULL"
-  }
+  },
+  currentPlayer: null
 };
 
 function messageReducer(state, name, data) {
@@ -44,7 +45,8 @@ function messageReducer(state, name, data) {
       return {
         ...state,
         gameState: GAME_STATES.WAITING_ROOM,
-        waitingRoom: data
+        waitingRoom: data,
+        currentPlayer: data.players.find(p => p.currentPlayer)
       };
     }
     case "playerJoinedGame": {
