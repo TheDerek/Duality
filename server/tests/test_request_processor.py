@@ -5,22 +5,17 @@ from unittest.mock import MagicMock, patch, AsyncMock
 from app.request_processor import on_create_game, join_game
 
 
+@pytest.fixture()
+def mock_dispatcher():
+    with patch("app.request_processor.dispatcher") as dispatcher:
+        dispatcher.add_to_message_queue = AsyncMock()
+        yield dispatcher
+
+
 @patch("app.request_processor.store")
-@patch("app.request_processor.dispatcher")
 @pytest.mark.asyncio
-async def test_create_game(dispatcher, store):
-    dispatcher.add_to_message_queue = AsyncMock()
-
-    mock_game = MagicMock()
-
-    mock_game_code = MagicMock()
-    mock_game.code = mock_game_code
-
-    mock_players_response = MagicMock()
-    mock_game.get_players_response = MagicMock(return_value=mock_players_response)
-
-    store.create_game = MagicMock(return_value=mock_game)
-
+async def test_create_game(store, mock_dispatcher):
+    mock_game = store.create_game.return_value
     client = MagicMock()
 
     request = {
@@ -29,12 +24,12 @@ async def test_create_game(dispatcher, store):
 
     await on_create_game(client, request)
 
-    dispatcher.add_to_message_queue.assert_called_with(
+    mock_dispatcher.add_to_message_queue.assert_called_with(
         client,
         {
             "joinGame": {
-                "gameCode": mock_game_code,
-                "players": mock_players_response,
+                "gameCode": mock_game.code,
+                "players": mock_game.get_players_response.return_value,
                 "admin": True
             }
         }
@@ -42,44 +37,33 @@ async def test_create_game(dispatcher, store):
 
 
 @patch("app.request_processor.store")
-@patch("app.request_processor.dispatcher")
 @pytest.mark.asyncio
-async def test_join_valid_game(dispatcher, store):
-    dispatcher.add_to_message_queue = AsyncMock()
+async def test_join_valid_game(store, mock_dispatcher):
+    mock_dispatcher.add_to_message_queue = AsyncMock()
 
-    mock_game = MagicMock()
-    mock_players_response = MagicMock()
-    mock_game.get_players_response = MagicMock(return_value=mock_players_response)
-
-    user = MagicMock()
-    user_name = MagicMock()
-    user.name = user_name
-
-    store.get_user = MagicMock(return_value=user)
-    store.get_game = MagicMock(return_value=mock_game)
-    store.add_player_to_game = MagicMock(return_value=(user, mock_game))
+    mock_game = store.get_game.return_value
+    mock_user = store.get_user.return_value
+    store.add_player_to_game.return_value = mock_user, mock_game
 
     client = MagicMock()
     game_code = MagicMock()
 
-    store.get_game = MagicMock(return_value=mock_game)
-
     request = {
         "gameCode": game_code,
-        "playerName":  user_name
+        "playerName":  mock_user.name
     }
 
     await join_game(client, request)
 
     store.get_user.assert_called_with(client)
-    store.modify_user.assert_called_with(user, name=user_name)
+    store.modify_user.assert_called_with(mock_user, name=mock_user.name)
 
-    dispatcher.add_to_message_queue.assert_called_with(
+    mock_dispatcher.add_to_message_queue.assert_called_with(
         client,
         {
             "joinGame": {
                 "gameCode": game_code,
-                "players": mock_players_response,
+                "players": mock_game.get_players_response.return_value,
                 "admin": False
             }
         }
