@@ -68,3 +68,7 @@ class Store:
 
         game.add_player(player)
         return player, game
+
+    def set_game_state(self, game: Game, state: Game.State):
+        game.state = state
+        return game

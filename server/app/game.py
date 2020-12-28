@@ -8,11 +8,12 @@ from app.user import User
 
 class Game:
     class State(Enum):
-        SUBMIT_ATTRIBUTES: auto()
+        WAITING_ROOM = auto()
+        SUBMIT_ATTRIBUTES = auto()
 
     def __init__(self, code: str, admin: User):
         self.players: Set[User] = set()
-        self.state = Game.State.SUBMIT_ATTRIBUTES
+        self.state = Game.State.WAITING_ROOM
         # List of names already used in the game
         self._names: Set[str] = set()
 

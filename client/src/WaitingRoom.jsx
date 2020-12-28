@@ -1,5 +1,6 @@
 import React from "react";
 import {connect} from "react-redux";
+import { startGame } from "./actions";
 
 function Player(props) {
   let listClass = "list-group-item";
@@ -23,6 +24,11 @@ function Player(props) {
 }
 
 class WaitingRoom extends React.Component {
+  startGame = () => {
+    this.props.startGame();
+    console.log("Start game button clicked")
+  };
+
   render() {
     const canStartGame = this.props.currentPlayer.admin
       && this.props.players.length >= this.props.minimumPlayers;
@@ -59,6 +65,7 @@ class WaitingRoom extends React.Component {
         <div className="card-footer">
           <div className="d-grid">
             <button
+              onClick={this.startGame}
               disabled={!canStartGame}
               className="btn btn-primary btn-block">
               Start Game
@@ -81,7 +88,7 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
-
+  startGame
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(WaitingRoom);

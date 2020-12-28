@@ -1,18 +1,21 @@
 import React from 'react';
-import {connect, Provider} from "react-redux";
+import {connect} from "react-redux";
 
 import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
+import SubmitAttributes from "./SubmitAttributes";
 
 export const GAME_STATES = {
   LOBBY: "LOBBY",
-  WAITING_ROOM: "WAITING_ROOM"
+  WAITING_ROOM: "WAITING_ROOM",
+  SUBMIT_ATTRIBUTES: "SUBMIT_ATTRIBUTES"
 };
 
 class App extends React.Component {
   #gameStates = {
     [GAME_STATES.LOBBY]: <Lobby/>,
-    [GAME_STATES.WAITING_ROOM]: <WaitingRoom/>
+    [GAME_STATES.WAITING_ROOM]: <WaitingRoom/>,
+    [GAME_STATES.SUBMIT_ATTRIBUTES]: <SubmitAttributes/>
   };
 
   getGameState() {
@@ -37,8 +40,8 @@ class App extends React.Component {
     return (
       <div>
         <nav className="navbar navbar-light bg-light mb-4">
-          <div className="container-fluid">
-            <span className="navbar-brand mb-0 h1">Big Boss Battle</span>
+          <div className="container-fluid game-container">
+            <span className="navbar-brand mb-0 h1">Supervillain Smackdown</span>
             { this.getGameCode() }
           </div>
         </nav>

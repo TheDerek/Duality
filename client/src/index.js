@@ -54,7 +54,7 @@ function messageReducer(state, name, data) {
     case "joinGame": {
       return {
         ...state,
-        gameState: GAME_STATES.WAITING_ROOM,
+        gameState: data.gameState,
         players: data.players,
         admin: data.admin,
         gameCode: data.gameCode,
@@ -69,6 +69,15 @@ function messageReducer(state, name, data) {
           ...state.players,
           data.player
         ]
+      };
+    }
+    case "startedGame": {
+      return {
+        ...state,
+        gameState: data.gameState,
+        players: data.players,
+        admin: data.admin,
+        currentPlayer: data.currentPlayer
       };
     }
     default:

@@ -81,7 +81,8 @@ async def join_game(client: WebClient, request: dict):
                 "gameCode": code,
                 "players": game.get_players_response(user),
                 "admin": False,
-                "currentPlayer": user.join_game_json(user, include_uuid=True)
+                "currentPlayer": user.join_game_json(user, include_uuid=True),
+                "gameState": game.state.name
             }
         },
     )
@@ -110,6 +111,7 @@ async def start_game(client: WebClient, request: dict):
         raise RequestError("Not in a game to start", "WAITING_ERROR", client)
 
     game: Game = user.current_game
+    store.set_game_state(game, Game.State.SUBMIT_ATTRIBUTES)
 
     if len(game.players) < MINIMUM_PLAYERS:
         raise RequestError("Not enough players to start", "WAITING_ERROR", client)
@@ -122,9 +124,9 @@ async def start_game(client: WebClient, request: dict):
             "startedGame": {
                 "gameCode": game.code,
                 "players": game.get_players_response(player),
-                "currentPlayer": player,
+                "currentPlayer": player.join_game_json(user, True),
                 "admin": game.admin == player,
-                "gameState": game.state
+                "gameState": game.state.name
             }
         }
 
