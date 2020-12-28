@@ -144,59 +144,57 @@ class Lobby extends React.Component {
     }
 
     return (
-      <div className="container">
-        <div className="card mt-3">
-          <div className="card-header">Lobby</div>
-          <div className="card-body">
-            {alert}
-            {errorDisplay}
-            <form onSubmit={this.handleDummySubmit}>
-              <div className="mb-4">
-                <label className="form-label">Player Name</label>
+      <div className="card mt-3">
+        <div className="card-header">Lobby</div>
+        <div className="card-body">
+          {alert}
+          {errorDisplay}
+          <form onSubmit={this.handleDummySubmit}>
+            <div className="mb-4">
+              <label className="form-label">Player Name</label>
+              <input
+                name="playerName"
+                value={this.state.playerName}
+                onChange={this.handleChange}
+                disabled={this.isFormDisabled()}
+                maxLength={this.NAME_MAX_LENGTH}
+                type="text"
+                className="form-control"
+                placeholder="Mr. Woshy" />
+            </div>
+            <div className="mt-4 mb-4">
+              <label className="form-label">Game Code</label>
+              <div className="input-group mb-3">
                 <input
-                  name="playerName"
-                  value={this.state.playerName}
+                  name="gameCode"
+                  value={this.state.gameCode}
                   onChange={this.handleChange}
                   disabled={this.isFormDisabled()}
-                  maxLength={this.NAME_MAX_LENGTH}
+                  maxLength={this.GAME_CODE_LENGTH}
                   type="text"
-                  className="form-control"
-                  placeholder="Mr. Woshy" />
+                  className="form-control text-uppercase"
+                  placeholder="BIGBAL" />
+                <button
+                  onClick={this.handleJoinGame}
+                  disabled={this.isFormDisabled()}
+                  className="btn btn-secondary">
+                  Join game
+                </button>
               </div>
-              <div className="mt-4 mb-4">
-                <label className="form-label">Game Code</label>
-                <div className="input-group mb-3">
-                  <input
-                    name="gameCode"
-                    value={this.state.gameCode}
-                    onChange={this.handleChange}
-                    disabled={this.isFormDisabled()}
-                    maxLength={this.GAME_CODE_LENGTH}
-                    type="text"
-                    className="form-control text-uppercase"
-                    placeholder="BIGBAL" />
-                  <button
-                    onClick={this.handleJoinGame}
-                    disabled={this.isFormDisabled()}
-                    className="btn btn-secondary">
-                    Join game
-                  </button>
-                </div>
+            </div>
+            <hr/>
+            <div className="text-center">
+              <div className="d-grid">
+                { gameCodeWarning }
+                <button
+                  onClick={this.handleCreatePrivateGame}
+                  disabled={this.isFormDisabled() || this.state.gameCode}
+                  className="btn btn-primary btn-block">
+                  Create new game
+                </button>
               </div>
-              <hr/>
-              <div className="text-center">
-                <div className="d-grid">
-                  { gameCodeWarning }
-                  <button
-                    onClick={this.handleCreatePrivateGame}
-                    disabled={this.isFormDisabled() || this.state.gameCode}
-                    className="btn btn-primary btn-block">
-                    Create new game
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       </div>
     );

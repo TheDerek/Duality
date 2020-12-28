@@ -1,5 +1,5 @@
 import React from 'react';
-import {connect} from "react-redux";
+import {connect, Provider} from "react-redux";
 
 import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
@@ -19,14 +19,41 @@ class App extends React.Component {
     return this.#gameStates[this.props.gameState];
   }
 
+  getGameCode() {
+    if (!this.props.gameCode) {
+      return null;
+    }
+
+    return (
+      <div className="d-flex">
+        <div className="text-right">
+          <em>Game Code: { this.props.gameCode }</em>
+        </div>
+      </div>
+    );
+  }
+
   render() {
-    return this.getGameState();
+    return (
+      <div>
+        <nav className="navbar navbar-light bg-light mb-4">
+          <div className="container-fluid">
+            <span className="navbar-brand mb-0 h1">Big Boss Battle</span>
+            { this.getGameCode() }
+          </div>
+        </nav>
+        <div className="container-md game-container">
+          { this.getGameState() }
+        </div>
+      </div>
+    )
   }
 }
 
 function mapStateToProps(state) {
   return {
-    gameState: state.gameState
+    gameState: state.gameState,
+    gameCode: state.gameCode
   }
 }
 
