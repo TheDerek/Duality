@@ -5,6 +5,7 @@ from typing import Dict, Optional, Tuple
 
 from app.user import WebClient, User
 from app.game import Game
+from app.exceptions import RequestError
 
 
 class Store:
@@ -57,5 +58,13 @@ class Store:
         return self._games[code]
 
     def add_player_to_game(self, player: User, game: Game) -> (User, Game):
+        if game.has_name(player.name):
+            raise RequestError(
+                f"Game {game.code} already has a player named {player.name}, please "
+                f" choose a different name",
+                "LOBBY_ERROR",
+                player.web_client
+            )
+
         game.add_player(player)
         return player, game

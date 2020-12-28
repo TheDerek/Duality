@@ -11,6 +11,7 @@ import websockets
 
 from app.request_processor import dispatcher as request_dispatcher
 from app.user import WebClient
+from app.exceptions import RequestError
 
 
 logging.basicConfig()
@@ -40,8 +41,12 @@ async def consumer_handler(websocket, path):
 
         if name not in request_dispatcher.requests:
             print(f"ERROR: No handler for {name} request")
-        else:
+            continue
+
+        try:
             await request_dispatcher.requests[name](websocket, data)
+        except RequestError as e:
+            await request_dispatcher.add_to_message_queue(e.client, e.get_error_response())
 
 
 async def handler(websocket: WebClient, path: str):

@@ -51,3 +51,10 @@ export function setUuid() {
     }
   })
 }
+
+export function startGame(playerName) {
+  return send({
+    startGame: {
+    }
+  });
+}

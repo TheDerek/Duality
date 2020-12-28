@@ -1,15 +1,14 @@
-import random
-import string
 import asyncio
 
-from typing import Dict
 from websockets.server import WebSocketServerProtocol
-from app.game import Game
-from app.user import User
 from app.request_dispatcher import RequestDispatcher
 from app.store import Store
+from app.exceptions import RequestError
+from app.game import Game
 
 WebClient = WebSocketServerProtocol
+
+MINIMUM_PLAYERS = 3
 
 dispatcher = RequestDispatcher()
 store = Store()
@@ -62,17 +61,16 @@ async def join_game(client: WebClient, request: dict):
     game = store.get_game(code)
 
     if game is None:
-        # TODO Send back game does not exist response
-        print(f"{user.name} attempted to join game {code}, which does not exist")
-        await dispatcher.add_to_message_queue(
-            client, {"noGameFound": {"gameCode": code}}
+        raise RequestError(
+            f"Game {code} does not exist, please try another code or create a game",
+            "LOBBY_ERROR",
+            client
         )
-        return
 
     new_join = user not in game.players
 
     if new_join:
-        player, game = store.add_player_to_game(user, game)
+        user, game = store.add_player_to_game(user, game)
         print(f"Player {user.name} joined game {code}")
 
     # Inform the user he joined the game
@@ -100,5 +98,39 @@ async def join_game(client: WebClient, request: dict):
         *[
             dispatcher.add_to_message_queue(player.web_client, joined_game_request)
             for player in other_players
+        ]
+    )
+
+
+@dispatcher.request("startGame")
+async def start_game(client: WebClient, request: dict):
+    user = store.get_user(client)
+
+    if not user.current_game:
+        raise RequestError("Not in a game to start", "WAITING_ERROR", client)
+
+    game: Game = user.current_game
+
+    if len(game.players) < MINIMUM_PLAYERS:
+        raise RequestError("Not enough players to start", "WAITING_ERROR", client)
+
+    if not game.admin == user:
+        raise RequestError("Not admin of game", "WAITING_ERROR", client)
+
+    def response(player):
+        return {
+            "startedGame": {
+                "gameCode": game.code,
+                "players": game.get_players_response(player),
+                "currentPlayer": player,
+                "admin": game.admin == player,
+                "gameState": game.state
+            }
+        }
+
+    await asyncio.gather(
+        *[
+            dispatcher.add_to_message_queue(player.web_client, response(user))
+            for player in game.players
         ]
     )

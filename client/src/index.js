@@ -37,15 +37,19 @@ const initialState = {
 
 function messageReducer(state, name, data) {
   switch(name) {
-    case "noGameFound": {
-      const code = data.gameCode;
-      return {
-        ...state,
-        lobby: {
-          status: LOBBY_STATUS.ERRORED,
-          errors: [`Could not find game with code ${code}`]
-        }
-      };
+    case "error": {
+      if (data.type === "LOBBY_ERROR") {
+        return {
+          ...state,
+          lobby: {
+            status: LOBBY_STATUS.ERRORED,
+            errors: [data.user_message]
+          }
+        };
+      } else {
+        console.error(data);
+        return;
+      }
     }
     case "joinGame": {
       return {
