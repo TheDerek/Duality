@@ -9,7 +9,7 @@ import { connect } from '@giantmachines/redux-websocket';
 import './index.css'
 import App from "./App"
 import { GAME_STATES } from "./App";
-import { GAME_STATUS, REPORT_LOBBY_STATUS, SET_SUBMITTING } from "./actions";
+import { GAME_STATUS, REPORT_STATUS } from "./actions";
 
 export const LOCAL_STORAGE_PLAYER_NAME = "playerNameValue";
 export const LOCAL_STORAGE_GAME_CODE = "gameCodeValue";
@@ -30,6 +30,7 @@ const initialState = {
   gameCode: "",
   admin: false,
   currentPlayer: null,
+  promptSubmissionNumber: 1,
   status: GAME_STATUS.NORMAL
 };
 
@@ -91,19 +92,12 @@ function reducer(state = initialState, action) {
       console.log("Got data from websocket", data);
 
       return messageReducer(state, name, data[name]);
-    case REPORT_LOBBY_STATUS:
+    case REPORT_STATUS:
       console.log("Setting lobby status");
       return {
         ...state,
-        lobby: {
-          status: action.status,
-          errors: action.errors
-        }
-      };
-    case SET_SUBMITTING:
-      return {
-        ...state,
-        submitting: true
+        status: action.status,
+        errors: action.errors
       };
     default:
       return state;

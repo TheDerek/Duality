@@ -1,6 +1,6 @@
 import { send } from '@giantmachines/redux-websocket';
 
-export const REPORT_LOBBY_STATUS = "REPORT_LOBBY_STATUS";
+export const REPORT_STATUS = "REPORT_STATUS";
 export const SET_UUID = "SET_UUID";
 export const SET_SUBMITTING = "SET_SUBMITTING";
 
@@ -8,7 +8,8 @@ export const GAME_STATUS = {
   NORMAL: "NORMAL",
   ERRORED: "ERRORED",
   JOINING_GAME: "JOINING_GAME",
-  CREATING_GAME: "CREATING_GAME"
+  CREATING_GAME: "CREATING_GAME",
+  SUBMITTING_PROMPT: "SUBMITTING_PROMPT"
 };
 
 export function createGame(playerName) {
@@ -31,7 +32,7 @@ export function joinGame(playerName, gameCode, uuid) {
 
 export function reportGameStatus(status, errors=[]) {
   return {
-    type: REPORT_LOBBY_STATUS,
+    type: REPORT_STATUS,
     status: status,
     errors: errors
   }
@@ -62,7 +63,7 @@ export function startGame(playerName) {
 
 export function submitPrompt(prompt) {
   return dispatch => {
-    dispatch({type: SET_SUBMITTING});
+    dispatch(reportGameStatus(GAME_STATUS.SUBMITTING_PROMPT));
     dispatch(send({
       submitPrompt: {
         prompt: prompt

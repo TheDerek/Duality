@@ -1,8 +1,9 @@
 import React from "react";
 import {connect} from "react-redux";
-import {submitPrompt} from "./actions";
+import {GAME_STATUS, submitPrompt} from "./actions";
 
 class SubmitPrompts extends React.Component {
+  #PROMPT_SUBMISSIONS = 2;
   #PROMPT_MAX_LENGTH = 35;
   #PROMPT_MIN_LENGTH = 3;
   #PROMPT_REGEX = new RegExp(`^[a-zA-Z0-9\\s]{0,${this.#PROMPT_MAX_LENGTH}}$`);
@@ -49,8 +50,16 @@ class SubmitPrompts extends React.Component {
       && this.state.promptValue.length >= this.#PROMPT_MIN_LENGTH
   };
 
-  getStatus = () => {
+  isSubmitting = () => {
+    return this.props.status === GAME_STATUS.SUBMITTING_PROMPT;
+  };
 
+  getStatusText = () => {
+    if (this.isSubmitting()) {
+      return "Submitting...";
+    }
+
+    return `Submission ${this.props.promptNumber} of ${this.#PROMPT_SUBMISSIONS}`;
   };
 
   render() {
@@ -73,10 +82,10 @@ class SubmitPrompts extends React.Component {
             </h5>
             <div className="ps-1 pe-2">
               <div className="float-start">
-                <em>Prompt 1 of 2</em>
+                <em>{ this.getStatusText() }</em>
               </div>
               <div className="float-end">
-                <em>{this.state.promptValue.length} / {this.#PROMPT_MAX_LENGTH} chars</em>
+                <em>{ this.state.promptValue.length} / {this.#PROMPT_MAX_LENGTH } chars</em>
               </div>
               <div className="clearfix"/>
             </div>
@@ -84,7 +93,7 @@ class SubmitPrompts extends React.Component {
               onSubmit={this.handleSubmit}
               className="input-group mb-1 mt-2">
               <input
-                disabled={this.props.submitting}
+                disabled={this.isSubmitting()}
                 onChange={this.handleChange}
                 value={this.state.promptValue}
                 name="attribute"
@@ -92,7 +101,7 @@ class SubmitPrompts extends React.Component {
                 className="form-control"
                 placeholder="emotionally stable" />
               <button
-                disabled={!this.canSubmit() || this.props.submitting}
+                disabled={!this.canSubmit() || this.isSubmitting()}
                 className="btn btn-primary">
                 Submit
               </button>
@@ -127,7 +136,9 @@ class SubmitPrompts extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    submitting: state.submitting
+    submitting: state.submitting,
+    status: state.status,
+    promptNumber: state.promptSubmissionNumber
   }
 }
 
