@@ -46,7 +46,10 @@ async def consumer_handler(websocket, path):
         try:
             await request_dispatcher.requests[name](websocket, data)
         except RequestError as e:
-            await request_dispatcher.add_to_message_queue(e.client, e.get_error_response())
+            await request_dispatcher.add_to_message_queue(
+                websocket,
+                e.get_error_response()
+            )
 
 
 async def handler(websocket: WebClient, path: str):

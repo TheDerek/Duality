@@ -37,16 +37,12 @@ const initialState = {
 function messageReducer(state, name, data) {
   switch(name) {
     case "error": {
-      if (data.type === "LOBBY_ERROR") {
-        return {
+      console.error(data);
+      return {
           ...state,
           status: GAME_STATUS.ERRORED,
-          errors: [data.user_message]
+          errors: [data.userMessage]
         };
-      } else {
-        console.error(data);
-        return;
-      }
     }
     case "joinGame": {
       return {

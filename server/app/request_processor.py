@@ -3,7 +3,7 @@ import asyncio
 from websockets.server import WebSocketServerProtocol
 from app.request_dispatcher import RequestDispatcher
 from app.store import Store
-from app.exceptions import RequestError
+from app.exceptions import RequestError, ErrorType
 from app.game import Game
 
 WebClient = WebSocketServerProtocol
@@ -63,9 +63,8 @@ async def join_game(client: WebClient, request: dict):
 
     if game is None:
         raise RequestError(
-            f"Game {code} does not exist, please try another code or create a game",
-            "LOBBY_ERROR",
-            client
+            ErrorType.LOBBY_ERROR,
+            f"Game {code} does not exist, please try another code or create a game"
         )
 
     new_join = user not in game.players
@@ -109,16 +108,16 @@ async def start_game(client: WebClient, request: dict):
     user = store.get_user(client)
 
     if not user.current_game:
-        raise RequestError("Not in a game to start", "WAITING_ERROR", client)
+        raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not in a game to start")
 
     game: Game = user.current_game
     store.set_game_state(game, Game.State.SUBMIT_ATTRIBUTES)
 
     if len(game.players) < MINIMUM_PLAYERS:
-        raise RequestError("Not enough players to start", "WAITING_ERROR", client)
+        raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not enough players to start")
 
     if not game.admin == user:
-        raise RequestError("Not admin of game", "WAITING_ERROR", client)
+        raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not admin of game")
 
     def response(player):
         return {
@@ -137,3 +136,8 @@ async def start_game(client: WebClient, request: dict):
             for player in game.players
         ]
     )
+
+
+@dispatcher.request("startGame")
+async def submit_prompt(client: WebClient, request: dict):
+    pass
