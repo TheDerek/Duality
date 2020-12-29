@@ -9,7 +9,7 @@ import { connect } from '@giantmachines/redux-websocket';
 import './index.css'
 import App from "./App"
 import { GAME_STATES } from "./App";
-import { LOBBY_STATUS, REPORT_LOBBY_STATUS} from "./actions";
+import { GAME_STATUS, REPORT_LOBBY_STATUS, SET_SUBMITTING } from "./actions";
 
 export const LOCAL_STORAGE_PLAYER_NAME = "playerNameValue";
 export const LOCAL_STORAGE_GAME_CODE = "gameCodeValue";
@@ -21,18 +21,16 @@ const initialState = {
   uuid: localStorage.getItem(LOCAL_STORAGE_UUID),
   minimumPlayers: 3,
   gameState: GAME_STATES.LOBBY,
-  lobby: {
-    status: LOBBY_STATUS.NORMAL,
-    errors: [],
-    presetFormValues: {
-      name: localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME),
-      gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE)
-    }
+  presetLobbyFormValues: {
+    name: localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME),
+    gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE)
   },
   players: [],
+  errors: [],
   gameCode: "",
   admin: false,
-  currentPlayer: null
+  currentPlayer: null,
+  status: GAME_STATUS.NORMAL
 };
 
 function messageReducer(state, name, data) {
@@ -41,10 +39,8 @@ function messageReducer(state, name, data) {
       if (data.type === "LOBBY_ERROR") {
         return {
           ...state,
-          lobby: {
-            status: LOBBY_STATUS.ERRORED,
-            errors: [data.user_message]
-          }
+          status: GAME_STATUS.ERRORED,
+          errors: [data.user_message]
         };
       } else {
         console.error(data);
@@ -89,6 +85,12 @@ function reducer(state = initialState, action) {
   console.log('reducer', state, action);
 
   switch(action.type) {
+    case 'REDUX_WEBSOCKET::MESSAGE':
+      const data = JSON.parse(action.payload.message);
+      const name = Object.keys(data)[0];
+      console.log("Got data from websocket", data);
+
+      return messageReducer(state, name, data[name]);
     case REPORT_LOBBY_STATUS:
       console.log("Setting lobby status");
       return {
@@ -98,12 +100,11 @@ function reducer(state = initialState, action) {
           errors: action.errors
         }
       };
-    case 'REDUX_WEBSOCKET::MESSAGE':
-      const data = JSON.parse(action.payload.message);
-      const name = Object.keys(data)[0];
-      console.log("Got data from websocket", data);
-
-      return messageReducer(state, name, data[name]);
+    case SET_SUBMITTING:
+      return {
+        ...state,
+        submitting: true
+      };
     default:
       return state;
   }

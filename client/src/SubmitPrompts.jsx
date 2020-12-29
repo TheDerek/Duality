@@ -1,15 +1,17 @@
 import React from "react";
 import {connect} from "react-redux";
-import {LOBBY_STATUS} from "./actions";
+import {submitPrompt} from "./actions";
 
-class SubmitAttributes extends React.Component {
-  #ATTRIBUTE_REGEX = /^[a-zA-Z0-9\s]{0,35}$/;
+class SubmitPrompts extends React.Component {
+  #PROMPT_MAX_LENGTH = 35;
+  #PROMPT_MIN_LENGTH = 3;
+  #PROMPT_REGEX = new RegExp(`^[a-zA-Z0-9\\s]{0,${this.#PROMPT_MAX_LENGTH}}$`);
 
   constructor(props) {
     super(props);
 
     this.state = {
-      attributeValue: ""
+      promptValue: "",
     }
   }
 
@@ -19,7 +21,7 @@ class SubmitAttributes extends React.Component {
 
     const startPos = target.selectionStart;
 
-    if (!value.match(this.#ATTRIBUTE_REGEX)) {
+    if (!value.match(this.#PROMPT_REGEX)) {
       window.requestAnimationFrame(() => {
         target.selectionStart = startPos - 1;
         target.selectionEnd = startPos - 1;
@@ -28,12 +30,27 @@ class SubmitAttributes extends React.Component {
     }
 
     this.setState({
-      attributeValue: value
+      promptValue: value
     });
   };
 
   handleSubmit = (event) => {
     event.preventDefault();
+
+    if (!this.canSubmit()) {
+      return;
+    }
+
+    this.props.submitPrompt(this.state.promptValue.trim());
+  };
+
+  canSubmit = () => {
+    return this.state.promptValue.match(this.#PROMPT_REGEX)
+      && this.state.promptValue.length >= this.#PROMPT_MIN_LENGTH
+  };
+
+  getStatus = () => {
+
   };
 
   render() {
@@ -52,14 +69,14 @@ class SubmitAttributes extends React.Component {
         <div className="card mt-4">
           <div className="card-body">
             <h5 className="card-title mb-3">
-              What attribute would be essential in a fight against a supervillain?
+              What ability would be essential in a fight against a supervillain?
             </h5>
             <div className="ps-1 pe-2">
               <div className="float-start">
-                <em>Attribute 1 of 2</em>
+                <em>Prompt 1 of 2</em>
               </div>
               <div className="float-end">
-                <em>{this.state.attributeValue.length} / 35 chars</em>
+                <em>{this.state.promptValue.length} / {this.#PROMPT_MAX_LENGTH} chars</em>
               </div>
               <div className="clearfix"/>
             </div>
@@ -67,20 +84,19 @@ class SubmitAttributes extends React.Component {
               onSubmit={this.handleSubmit}
               className="input-group mb-1 mt-2">
               <input
+                disabled={this.props.submitting}
                 onChange={this.handleChange}
-                value={this.state.attributeValue}
+                value={this.state.promptValue}
                 name="attribute"
                 type="text"
                 className="form-control"
                 placeholder="emotionally stable" />
               <button
-                className="btn btn-secondary">
+                disabled={!this.canSubmit() || this.props.submitting}
+                className="btn btn-primary">
                 Submit
               </button>
             </form>
-            <p className="mb-1 ps-1">
-              <em>e.g. bravery, strength, courage</em>
-            </p>
           </div>
         </div>
         <div className="card-group mt-4">
@@ -89,8 +105,8 @@ class SubmitAttributes extends React.Component {
               Waiting for
             </div>
             <ul className="list-group list-group-flush">
-              <li className="list-group-item">Derek</li>
-              <li className="list-group-item">Cras justo odio</li>
+              <li className="list-group-item border-0">Derek</li>
+              <li className="list-group-item border-0">Cras justo odio</li>
             </ul>
           </div>
           <div className="card">
@@ -98,9 +114,9 @@ class SubmitAttributes extends React.Component {
               Done
             </div>
             <ul className="list-group list-group-flush">
-              <li className="list-group-item">Cras justo odio</li>
-              <li className="list-group-item">Dapibus ac facilisis in</li>
-              <li className="list-group-item">Vestibulum at eros</li>
+              <li className="list-group-item border-0">Cras justo odio</li>
+              <li className="list-group-item border-0">Dapibus ac facilisis in</li>
+              <li className="list-group-item border-0">Vestibulum at eros</li>
             </ul>
           </div>
         </div>
@@ -111,12 +127,12 @@ class SubmitAttributes extends React.Component {
 
 function mapStateToProps(state) {
   return {
-
+    submitting: state.submitting
   }
 }
 
 const mapDispatchToProps = {
-
+  submitPrompt
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(SubmitAttributes);
+export default connect(mapStateToProps, mapDispatchToProps)(SubmitPrompts);

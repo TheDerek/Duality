@@ -1,5 +1,5 @@
 import React from 'react';
-import {createGame,joinGame,reportLobbyStatus,LOBBY_STATUS} from "./actions";
+import {createGame,joinGame,reportGameStatus,GAME_STATUS} from "./actions";
 import {connect} from "react-redux";
 
 class Lobby extends React.Component {
@@ -75,8 +75,8 @@ class Lobby extends React.Component {
 
     let errored = errors.length > 0;
 
-    this.props.reportLobbyStatus(
-      errored ? LOBBY_STATUS.ERRORED : LOBBY_STATUS.NORMAL,
+    this.props.reportGameStatus(
+      errored ? GAME_STATUS.ERRORED : GAME_STATUS.NORMAL,
       errors
     );
 
@@ -90,7 +90,7 @@ class Lobby extends React.Component {
       return;
     }
 
-    this.props.reportLobbyStatus(LOBBY_STATUS.CREATING_GAME);
+    this.props.reportGameStatus(GAME_STATUS.CREATING_GAME);
 
     console.log("Successfully validated, creating game");
     this.props.createGame(this.state.playerName);
@@ -103,7 +103,7 @@ class Lobby extends React.Component {
       return;
     }
 
-    this.props.reportLobbyStatus(LOBBY_STATUS.JOINING_GAME);
+    this.props.reportGameStatus(GAME_STATUS.JOINING_GAME);
 
     console.log("Successfully validated, joining game", this.state.gameCode);
     this.props.joinGame(this.state.playerName, this.state.gameCode, this.props.uuid);
@@ -112,11 +112,11 @@ class Lobby extends React.Component {
   getAlert() {
     const status = this.props.status;
 
-    if (status === LOBBY_STATUS.CREATING_GAME) {
+    if (status === GAME_STATUS.CREATING_GAME) {
       return <Alert text="Creating game..."/>;
     }
 
-    if (status === LOBBY_STATUS.JOINING_GAME) {
+    if (status === GAME_STATUS.JOINING_GAME) {
       return <Alert text="Joining game..."/>;
     }
 
@@ -124,13 +124,13 @@ class Lobby extends React.Component {
   }
 
   isFormDisabled() {
-    return this.props.status === LOBBY_STATUS.JOINING_GAME
-      || this.props.status === LOBBY_STATUS.CREATING_GAME;
+    return this.props.status === GAME_STATUS.JOINING_GAME
+      || this.props.status === GAME_STATUS.CREATING_GAME;
   }
 
   render() {
     let errorDisplay = null;
-    if (this.props.status === LOBBY_STATUS.ERRORED) {
+    if (this.props.status === GAME_STATUS.ERRORED) {
       errorDisplay = <Errors errors={this.props.errors}/>;
     }
 
@@ -223,9 +223,9 @@ function Alert(props) {
 
 function mapStateToProps(state) {
   return {
-    errors: state.lobby.errors,
-    status: state.lobby.status,
-    presetValues: state.lobby.presetFormValues,
+    errors: state.errors,
+    status: state.status,
+    presetValues: state.presetLobbyFormValues,
     uuid: state.uuid
   }
 }
@@ -233,7 +233,7 @@ function mapStateToProps(state) {
 const mapDispatchToProps = {
   createGame,
   joinGame,
-  reportLobbyStatus
+  reportGameStatus: reportGameStatus
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Lobby);
