@@ -2,8 +2,6 @@ import asyncio
 
 from websockets.server import WebSocketServerProtocol
 
-import constants
-
 from app.request_dispatcher import RequestDispatcher
 from app.store import Store
 from app.exceptions import RequestError, ErrorType, PromptError
@@ -26,7 +24,6 @@ async def on_client_connected(web_client: WebClient):
 @dispatcher.on_client_closed
 async def on_client_closed(web_client: WebClient):
     print(f"clientClosed={web_client}")
-    user = store.get_user(web_client)
 
     store.remove_user(web_client)
 
@@ -114,7 +111,7 @@ async def start_game(client: WebClient, request: dict):
         raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not in a game to start")
 
     game: Game = user.current_game
-    store.set_game_state(game, Game.State.SUBMIT_ATTRIBUTES)
+    store.set_game_state(game, State.SUBMIT_ATTRIBUTES)
 
     if len(game.players) < MINIMUM_PLAYERS:
         raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not enough players to start")

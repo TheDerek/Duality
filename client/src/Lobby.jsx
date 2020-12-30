@@ -1,6 +1,8 @@
 import React from 'react';
+
 import {createGame,joinGame,reportGameStatus,GAME_STATUS} from "./actions";
 import {connect} from "react-redux";
+import Errors from "./Errors"
 
 class Lobby extends React.Component {
   NAME_MIN_LENGTH = 2;
@@ -199,18 +201,6 @@ class Lobby extends React.Component {
       </div>
     );
   }
-}
-
-function Errors(props) {
-  return (
-    <div className="alert alert-danger">
-      <ul className="mb-0">
-        {
-          props.errors.map((error, i) => <li key={i}>{error}</li>)
-        }
-      </ul>
-    </div>
-  );
 }
 
 function Alert(props) {

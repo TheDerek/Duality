@@ -17,7 +17,7 @@ class State(Enum):
 @dataclass()
 class Round:
     number: int
-    prompts: Dict[User, List[str]] = field(default_factory=defaultdict(list))
+    prompts: Dict[User, List[str]] = field(default_factory=lambda: defaultdict(list))
 
     def add_prompt(self, user: User, prompt: str):
         user_prompts = self.prompts[user]

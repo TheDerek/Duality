@@ -79,4 +79,4 @@ class Store:
         return game.get_current_round().prompts[user]
 
     def add_prompt(self, user: User, prompt: str) -> None:
-        user.current_game.add_prompt(prompt)
+        user.current_game.add_prompt(user, prompt)

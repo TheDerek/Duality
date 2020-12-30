@@ -1,6 +1,8 @@
 import React from "react";
 import {connect} from "react-redux";
+
 import {GAME_STATUS, submitPrompt} from "./actions";
+import Errors from "./Errors"
 
 class SubmitPrompts extends React.Component {
   #PROMPT_SUBMISSIONS = 2;
@@ -80,6 +82,7 @@ class SubmitPrompts extends React.Component {
             <h5 className="card-title mb-3">
               What ability would be essential in a fight against a supervillain?
             </h5>
+            <Errors errors={this.props.errors}/>
             <div className="ps-1 pe-2">
               <div className="float-start">
                 <em>{ this.getStatusText() }</em>
@@ -138,7 +141,8 @@ function mapStateToProps(state) {
   return {
     submitting: state.submitting,
     status: state.status,
-    promptNumber: state.promptSubmissionNumber
+    promptNumber: state.promptSubmissionNumber,
+    errors: state.errors
   }
 }
 
