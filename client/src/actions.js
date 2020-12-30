@@ -12,10 +12,11 @@ export const GAME_STATUS = {
   SUBMITTING_PROMPT: "SUBMITTING_PROMPT"
 };
 
-export function createGame(playerName) {
+export function createGame(playerName, uuid) {
   return send({
     createGame: {
-      playerName: playerName
+      playerName: playerName,
+      uuid: uuid
     }
   });
 }

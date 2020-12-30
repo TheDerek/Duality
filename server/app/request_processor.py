@@ -30,13 +30,18 @@ async def on_client_closed(web_client: WebClient):
 
 @dispatcher.request("createGame")
 async def on_create_game(client: WebClient, request: dict):
-    
+    # createGame: {
+    #     playerName: playerName,
+    #     uuid: uuid
+    # }
+    uuid: str = store.get_or_create_user(client, request["uuid"])
+    game_code: str = store.create_game(uuid)
 
     await dispatcher.add_to_message_queue(
         client,
         {
             "joinGame": {
-                "gameCode": game.code,
+                "gameCode": game_code,
                 "players": game.get_players_response(user),
                 "admin": True,
                 "currentPlayer": user.join_game_json(user, include_uuid=True),

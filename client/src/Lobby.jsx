@@ -95,7 +95,7 @@ class Lobby extends React.Component {
     this.props.reportGameStatus(GAME_STATUS.CREATING_GAME);
 
     console.log("Successfully validated, creating game");
-    this.props.createGame(this.state.playerName);
+    this.props.createGame(this.state.playerName, this.props.uuid);
   };
 
   handleJoinGame = (event) => {

@@ -1,14 +1,11 @@
 import random
 import string
-import asyncio
+import sqlite3
 
-from typing import Dict, Optional, List, Set
+from uuid import uuid4
+from typing import Dict, Optional, Set
 
-import aiosqlite
-
-from app.user import WebClient, User
-from app.game import Game, State
-from app.exceptions import RequestError, PromptError, ErrorType
+from app.user import WebClient
 
 
 class Store:
@@ -20,12 +17,12 @@ class Store:
         # Disconnected users associated by their uuid
         self._disconnected_users: Set[str] = set()
 
-        self._database: aiosqlite.Connection = aiosqlite.connect(
-            "sqlite:////home/derek/git/boss-fight/database/db.sqlite3"
+        self._db: sqlite3.Connection = sqlite3.connect(
+            "/home/derek/git/boss-fight/database/db.sqlite3"
         )
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._database.close()
+        self._db.close()
 
     def add_client(self, client: WebClient):
         print("Adding client")
@@ -38,60 +35,43 @@ class Store:
         if uuid:
             self._disconnected_users.add(uuid)
 
-    def add_user(self, client: WebClient) -> User:
-        user = User(client)
-        self._users[client] = user
-        return user
-
-    def get_user(self, client) -> User:
-        return self._users[client]
-
-    def get_or_sync_user(self, client, uuid: str) -> User:
-        synced = uuid in self._disconnected_users
-
-        if synced:
-            self._users[client] = self._disconnected_users.pop(uuid)
-            self._users[client].web_client = client
-
-        return self._users[client]
-
-    def modify_user(self, user, name=__sentinel) -> User:
-        if name is not self.__sentinel:
-            user.name = name
-
-        return user
-
-    def create_game(self, admin: User) -> Game:
+    def create_game(self, admin_uuid: str, admin_name: str) -> str:
         code = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
-        game = Game(code, admin)
 
-        self._games[code] = game
-        return game
+        # Create the game
+        self._db.execute(
+            "INSERT INTO game (code) VALUES (?)",
+            [code]
+        )
 
-    def get_game(self, code: str) -> Optional[Game]:
-        if code not in self._games:
-            return None
+        # Add the user to the game
+        self._db.execute(
+            "INSERT INTO game_user (game_code, user_uuid, admin, name)"
+            "VALUES (?, ?, ?, ?)",
+            (code, admin_uuid, True, admin_name)
+        )
 
-        return self._games[code]
+        self._db.commit()
 
-    def add_player_to_game(self, player: User, game: Game) -> (User, Game):
-        if game.has_name(player.name):
-            raise RequestError(
-                ErrorType.LOBBY_ERROR,
-                f"Game {game.code} already has a player named {player.name}, please "
-                f" choose a different name"
-            )
+        return code
 
-        game.add_player(player)
-        return player, game
+    def create_game_player(self, uuid: str):
+        pass
 
-    def set_game_state(self, game: Game, state: State):
-        game.state = state
-        return game
+    def get_or_create_user(self, client: WebClient, uuid: Optional[str]) -> str:
+        # If the user has not provided a uuid or has provided a fake uuid that is not
+        # in the database generate a new uuid for them
+        if not uuid or not self._database_has_user(uuid):
+            uuid = str(uuid4())
+            self._db.execute("INSERT INTO user (uuid) values (?)", [uuid])
+            self._db.commit()
 
-    def get_user_prompts(self, user: User) -> List[str]:
-        game: Game = user.current_game
-        return game.get_current_round().prompts[user]
+        # Assign the uuid to the connected client and to the database
+        self._users[client] = uuid
+        return uuid
 
-    def add_prompt(self, user: User, prompt: str) -> None:
-        user.current_game.add_prompt(user, prompt)
+    def _database_has_user(self, uuid: str) -> bool:
+        cursor: sqlite3.Cursor = self._db.cursor()
+        return bool(
+            cursor.execute("SELECT uuid FROM user WHERE uuid=?", [uuid]).fetchone()
+        )
