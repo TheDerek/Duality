@@ -115,7 +115,7 @@ const gameMiddleware = storeAPI => next => action => {
 
       localStorage.setItem(LOCAL_STORAGE_PLAYER_NAME, current_player.name);
       localStorage.setItem(LOCAL_STORAGE_GAME_CODE, data.joinGame.gameCode);
-      localStorage.setItem(LOCAL_STORAGE_UUID, current_player.uuid)
+      localStorage.setItem(LOCAL_STORAGE_UUID, data.joinGame.uuid)
     }
   }
 

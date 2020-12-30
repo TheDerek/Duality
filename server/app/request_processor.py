@@ -26,7 +26,6 @@ async def on_client_connected(web_client: WebClient):
 @dispatcher.on_client_closed
 async def on_client_closed(web_client: WebClient):
     print(f"clientClosed={web_client}")
-
     store.remove_client(web_client)
 
 
