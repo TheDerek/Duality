@@ -20,3 +20,8 @@ class RequestError(Exception):
                 "userMessage": str(self)
             }
         }
+
+
+class PromptError(RequestError):
+    def __init__(self, message: str):
+        super().__init__(ErrorType.PROMPT_SUBMISSION_ERROR, message)

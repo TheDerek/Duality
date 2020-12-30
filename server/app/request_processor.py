@@ -1,10 +1,13 @@
 import asyncio
 
 from websockets.server import WebSocketServerProtocol
+
+import constants
+
 from app.request_dispatcher import RequestDispatcher
 from app.store import Store
-from app.exceptions import RequestError, ErrorType
-from app.game import Game
+from app.exceptions import RequestError, ErrorType, PromptError
+from app.game import Game, State
 
 WebClient = WebSocketServerProtocol
 
@@ -52,7 +55,7 @@ async def on_create_game(client: WebClient, request: dict):
 
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
-    user, synced = store.get_or_sync_user(client, request["uuid"])
+    user = store.get_or_sync_user(client, request["uuid"])
 
     # Only modify the users name if they don't have one yet
     if not user.name:
@@ -138,6 +141,12 @@ async def start_game(client: WebClient, request: dict):
     )
 
 
-@dispatcher.request("startGame")
+@dispatcher.request("submitPrompt")
 async def submit_prompt(client: WebClient, request: dict):
-    pass
+    user = store.get_user(client)
+    game = user.current_game
+
+    if game.state != State.SUBMIT_ATTRIBUTES:
+        raise PromptError("Incorrect game state")
+
+    store.add_prompt(user, request["prompt"])

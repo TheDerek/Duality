@@ -1,0 +1,2 @@
+NUMBER_OF_ROUNDS: int = 3
+NUMBER_OF_PROMPTS: int = 2

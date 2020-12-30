@@ -29,8 +29,10 @@ async def test_create_game(store, mock_dispatcher):
         {
             "joinGame": {
                 "gameCode": mock_game.code,
-                "players": mock_game.get_players_response.return_value,
-                "admin": True
+                "players": mock_game.get_players_response(),
+                "admin": True,
+                "gameState": mock_game.state.name,
+                "currentPlayer": store.modify_user().join_game_json()
             }
         }
     )
@@ -42,20 +44,23 @@ async def test_join_valid_game(store, mock_dispatcher):
     mock_dispatcher.add_to_message_queue = AsyncMock()
 
     mock_game = store.get_game.return_value
-    mock_user = store.get_user.return_value
+    mock_user = store.get_or_sync_user.return_value
+    mock_user.name = None
     store.add_player_to_game.return_value = mock_user, mock_game
 
     client = MagicMock()
     game_code = MagicMock()
+    uuid = MagicMock()
 
     request = {
         "gameCode": game_code,
-        "playerName":  mock_user.name
+        "playerName":  mock_user.name,
+        "uuid": uuid
     }
 
     await join_game(client, request)
 
-    store.get_user.assert_called_with(client)
+    store.get_or_sync_user.assert_called_with(client, uuid)
     store.modify_user.assert_called_with(mock_user, name=mock_user.name)
 
     mock_dispatcher.add_to_message_queue.assert_called_with(
@@ -64,7 +69,9 @@ async def test_join_valid_game(store, mock_dispatcher):
             "joinGame": {
                 "gameCode": game_code,
                 "players": mock_game.get_players_response.return_value,
-                "admin": False
+                "admin": False,
+                "currentPlayer": mock_user.join_game_json(),
+                "gameState": mock_game.state.name
             }
         }
     )
