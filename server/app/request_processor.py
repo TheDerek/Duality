@@ -18,23 +18,19 @@ store = Store()
 @dispatcher.on_client_connected
 async def on_client_connected(web_client: WebClient):
     print(f"newClient={web_client}")
-    store.add_user(web_client)
+    store.add_client(web_client)
 
 
 @dispatcher.on_client_closed
 async def on_client_closed(web_client: WebClient):
     print(f"clientClosed={web_client}")
 
-    store.remove_user(web_client)
+    store.remove_client(web_client)
 
 
 @dispatcher.request("createGame")
 async def on_create_game(client: WebClient, request: dict):
-    user = store.get_user(client)
-    user = store.modify_user(user, name=request["playerName"])
-
-    game = store.create_game(user)
-    print(f"Created game {game.code} with admin {game.admin.name}")
+    
 
     await dispatcher.add_to_message_queue(
         client,
