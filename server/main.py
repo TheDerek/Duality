@@ -6,13 +6,13 @@ import asyncio
 import functools
 import json
 import logging
+from asyncio import Future
 
 import websockets
 
 from app.request_processor import dispatcher as request_dispatcher
 from app.user import WebClient
-from app.exceptions import RequestError
-
+from app.exceptions import RequestError, PromptError
 
 logging.basicConfig()
 
@@ -45,11 +45,15 @@ async def consumer_handler(websocket, path):
 
         try:
             await request_dispatcher.requests[name](websocket, data)
-        except RequestError as e:
-            await request_dispatcher.add_to_message_queue(
-                websocket,
-                e.get_error_response()
-            )
+        except Exception as e:
+            if hasattr(e, "_type"):
+                print(str(e._type) + ": " + str(e))
+                await request_dispatcher.add_to_message_queue(
+                    websocket,
+                    e.get_error_response()
+                )
+            else:
+                raise
 
 
 async def handler(websocket: WebClient, path: str):

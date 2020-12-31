@@ -70,6 +70,22 @@ function messageReducer(state, name, data) {
         gameState: data.gameState
       };
     }
+    case "updatePlayer": {
+      return {
+        ...state,
+        status: data.status || state.status,
+        currentPlayer: data.player.name === state.currentPlayer.name
+          ? data.player
+          : state.currentPlayer,
+        players: state.players.map((player) => {
+          if (player.name === data.player.name) {
+            return data.player
+          }
+
+          return player
+        })
+      }
+    }
     default:
       return state;
   }

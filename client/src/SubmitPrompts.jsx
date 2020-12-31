@@ -57,11 +57,24 @@ class SubmitPrompts extends React.Component {
   };
 
   getStatusText = () => {
+    if (this.props.currentPlayer.promptSubmissionFinished) {
+      return "Submissions finished, waiting on other players"
+    }
+
     if (this.isSubmitting()) {
       return "Submitting...";
     }
 
-    return `Submission ${this.props.promptNumber} of ${this.#PROMPT_SUBMISSIONS}`;
+    return `Submission ${this.props.currentPlayer.private.currentPromptNumber} of ${this.#PROMPT_SUBMISSIONS}`;
+  };
+
+  getCharacterCount = () => {
+    if (this.props.currentPlayer.promptSubmissionFinished) {
+      return null;
+    }
+
+    return <em>{ this.state.promptValue.length} / {this.#PROMPT_MAX_LENGTH } chars</em>
+
   };
 
   render() {
@@ -88,7 +101,7 @@ class SubmitPrompts extends React.Component {
                 <em>{ this.getStatusText() }</em>
               </div>
               <div className="float-end">
-                <em>{ this.state.promptValue.length} / {this.#PROMPT_MAX_LENGTH } chars</em>
+                { this.getCharacterCount() }
               </div>
               <div className="clearfix"/>
             </div>
@@ -96,7 +109,7 @@ class SubmitPrompts extends React.Component {
               onSubmit={this.handleSubmit}
               className="input-group mb-1 mt-2">
               <input
-                disabled={this.isSubmitting()}
+                disabled={this.isSubmitting() || this.props.currentPlayer.promptSubmissionFinished}
                 onChange={this.handleChange}
                 value={this.state.promptValue}
                 name="attribute"
@@ -104,7 +117,7 @@ class SubmitPrompts extends React.Component {
                 className="form-control"
                 placeholder="emotionally stable" />
               <button
-                disabled={!this.canSubmit() || this.isSubmitting()}
+                disabled={!this.canSubmit() || this.isSubmitting() || this.props.currentPlayer.promptSubmissionFinished}
                 className="btn btn-primary">
                 Submit
               </button>
@@ -143,7 +156,9 @@ function mapStateToProps(state) {
     status: state.status,
     promptNumber: state.promptSubmissionNumber,
     errors: state.errors,
-    gameCode: state.gameCode
+    gameCode: state.gameCode,
+    players: state.players,
+    currentPlayer: state.currentPlayer
   }
 }
 

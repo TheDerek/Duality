@@ -8,8 +8,9 @@ from uuid import uuid4
 from typing import Dict, Optional, Set, List
 from dataclasses import dataclass
 
+import constants
 from websockets.server import WebSocketServerProtocol as WebClient
-from exceptions import DatabaseError
+from exceptions import DatabaseError, PromptError
 
 
 @dataclass()
@@ -129,9 +130,7 @@ class Store:
         if not db_state:
             raise DatabaseError(f"Game {game_code} does not exist")
 
-        return GameState[
-            db_state["state"]
-        ]
+        return GameState[db_state["state"]]
 
     def get_player(self, game_code: str, user_uuid: str) -> Player:
         cursor: sqlite3.Cursor = self._db.cursor()
@@ -201,7 +200,7 @@ class Store:
         return bool(
             cursor.execute(
                 "SELECT LOWER(name) FROM game_user WHERE name=? and game_code=?",
-                [name.lower().strip(), code]
+                [name.lower().strip(), code],
             ).fetchone()
         )
 
@@ -226,19 +225,98 @@ class Store:
         # Add the new round
         self._db.execute(
             "INSERT INTO round (number, game_code, current) VALUES (?, ?, True)",
-            (new_number, code)
+            (new_number, code),
         )
 
         self._db.commit()
         return new_number
 
-    def get_game_round_prompts(self, code: str) -> Set[str]:
+    def get_prompts(self, code: str, uuid: Optional[str] = None) -> Set[str]:
         """Get the prompts submitted for the current round of the given game code"""
         cursor: sqlite3.Cursor = self._db.cursor()
-        cursor.execute("SELECT prompt FROM round_prompt WHERE game_code=?")
 
-    def submit_prompt(self, code: str, uuid: str, prompt: str):
+        sql = "SELECT prompt FROM round_prompt " \
+              "INNER JOIN round ON round.game_code=round_prompt.game_code " \
+              "WHERE round_prompt.game_code=? and round.current = True"
+        fields = [code]
+
+        if uuid:
+            sql += " AND round_prompt.user_uuid=?"
+            fields += [uuid]
+
+        cursor.execute(sql, fields)
+
+        return set(record["prompt"] for record in cursor)
+
+    def player_prompt_count(self, code: str, uuid: str) -> int:
+        """
+        :param code:
+        :param uuid:
+        :return: the number of prompts the player has made for the current round
+        """
         cursor: sqlite3.Cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT count(prompt) as count FROM round_prompt "
+            "INNER JOIN round ON round.game_code=round_prompt.game_code "
+            "WHERE round.current=TRUE AND round_prompt.game_code=? "
+            "AND round_prompt.user_uuid=?",
+            (code, uuid)
+        )
+
+        return cursor.fetchone()["count"]
+
+    def game_has_prompt(self, code: str, prompt: str):
+        """
+        :param code:
+        :param name:
+        :return: True if the games current round has the given prompt, False otherwise
+        """
+        cursor: sqlite3.Cursor = self._db.cursor()
+        return cursor.execute(
+            "SELECT 1 FROM round_prompt "
+            "INNER JOIN round ON round.game_code=round_prompt.game_code "
+            "WHERE round.current=TRUE AND round_prompt.game_code=? "
+            "AND lower(round_prompt.prompt)=lower(?)",
+            (code, prompt),
+        ).fetchone() is not None
+
+    def submit_prompt(self, code: str, uuid: str, prompt: str) -> int:
+        """Write a prompt to the database if it unique for that round and the user still
+        has prompts to submit, otherwise throw a PromptError
+        :param code: the game code to submit the prompt to
+        :param uuid: the uuid of the player submitting the code
+        :param prompt: the prompt being submitted
+        :return: the number of prompts the player has submitted so far including this one
+        """
+        prompt = prompt.strip()
+
+        if self.game_has_prompt(code, prompt):
+            raise PromptError(
+                f"Prompt has '{prompt}' has already been submitted for this round"
+            )
+
+        player_prompt_count = self.player_prompt_count(code, uuid)
+        if player_prompt_count + 1 > constants.NUMBER_OF_PROMPTS_PER_USER:
+            raise PromptError("User has already submitted all prompts for this round")
+
+        round_number: int = self.get_current_round_number(code)
+
+        # The prompts are 0-indexed in the database, so we can just return the current
+        # count as the new prompt index
+        self._db.execute(
+            "INSERT INTO round_prompt "
+            "(game_code, round_number, user_uuid, prompt_number, prompt) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (code, round_number, uuid, player_prompt_count, prompt)
+        )
+
+        self._db.commit()
+
+        return player_prompt_count + 1
+
+    def has_finished_prompt_submission(self, code: str, uuid: str):
+        return self.player_prompt_count(code, uuid) \
+            >= constants.NUMBER_OF_PROMPTS_PER_USER
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()
