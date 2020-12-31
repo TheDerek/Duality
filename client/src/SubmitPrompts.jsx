@@ -4,6 +4,23 @@ import {connect} from "react-redux";
 import {GAME_STATUS, submitPrompt} from "./actions";
 import Errors from "./Errors"
 
+
+function Player(props) {
+  return (
+    <li className="list-group-item border-0">{ props.player.name }</li>
+  )
+}
+
+function Players(props) {
+  return (
+      <ul className="list-group list-group-flush">
+        { props.players.map((player, index) => (
+          <Player key={index} player={player} />
+        )) }
+      </ul>
+    )
+}
+
 class SubmitPrompts extends React.Component {
   #PROMPT_SUBMISSIONS = 2;
   #PROMPT_MAX_LENGTH = 35;
@@ -129,20 +146,13 @@ class SubmitPrompts extends React.Component {
             <div className="card-header">
               Waiting for
             </div>
-            <ul className="list-group list-group-flush">
-              <li className="list-group-item border-0">Derek</li>
-              <li className="list-group-item border-0">Cras justo odio</li>
-            </ul>
+            <Players players={ this.props.players.filter((player => !player.promptSubmissionFinished)) } />
           </div>
           <div className="card">
             <div className="card-header">
               Done
             </div>
-            <ul className="list-group list-group-flush">
-              <li className="list-group-item border-0">Cras justo odio</li>
-              <li className="list-group-item border-0">Dapibus ac facilisis in</li>
-              <li className="list-group-item border-0">Vestibulum at eros</li>
-            </ul>
+            <Players players={ this.props.players.filter((player => player.promptSubmissionFinished)) } />
           </div>
         </div>
       </div>

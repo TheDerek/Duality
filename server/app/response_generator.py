@@ -13,7 +13,7 @@ class ResponseGenerator:
         return {
             "joinGame": {
                 "gameCode": game_code,
-                "players": self._generate_players(game_code, user_uuid),
+                "players": self._generate_players(game_code),
                 "admin": self._store.is_admin_of_game(user_uuid, game_code),
                 "currentPlayer": self._generate_player(
                     game_code, user_uuid, private_info=True
@@ -59,7 +59,7 @@ class ResponseGenerator:
 
         return response
 
-    def _generate_players(self, game_code: str, user_uuid: str) -> list:
+    def _generate_players(self, game_code: str) -> list:
         players: List[Player] = self._store.get_players(game_code)
 
-        return [{"name": player.name, "admin": player.admin,} for player in players]
+        return [self._generate_player(game_code, player.uuid) for player in players]

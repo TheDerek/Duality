@@ -7,5 +7,5 @@
   if it cannot return to the server and display an error message
 
 ## TODO
-- [ ] Correctly display waiting/done players in prompt submission
+- [x] Correctly display waiting/done players in prompt submission
 - [ ] Transition to next stage if all players have submitted their prompts 
