@@ -63,11 +63,12 @@ export function startGame(gameCode) {
   });
 }
 
-export function submitPrompt(prompt) {
+export function submitPrompt(gameCode, prompt) {
   return dispatch => {
     dispatch(reportGameStatus(GAME_STATUS.SUBMITTING_PROMPT));
     dispatch(send({
       submitPrompt: {
+        gameCode: gameCode,
         prompt: prompt
       }
     }));

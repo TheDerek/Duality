@@ -66,7 +66,7 @@ class Store:
         self._db.execute(
             "INSERT INTO game_user (game_code, user_uuid, client_hash, admin, name)"
             "VALUES (?, ?, ?, ?, ?)",
-            (game_code, user_uuid, hash(client), admin, user_name),
+            (game_code, user_uuid, hash(client), admin, user_name.strip()),
         )
 
         if commit:
@@ -120,11 +120,18 @@ class Store:
             ).fetchone()["admin"]
         )
 
-    def get_game_state(self, game_code: str) -> str:
+    def get_game_state(self, game_code: str) -> GameState:
         cursor: sqlite3.Cursor = self._db.cursor()
-        return cursor.execute(
+        db_state = cursor.execute(
             "SELECT state FROM game WHERE code=?", [game_code],
-        ).fetchone()["state"]
+        ).fetchone()
+
+        if not db_state:
+            raise DatabaseError(f"Game {game_code} does not exist")
+
+        return GameState[
+            db_state["state"]
+        ]
 
     def get_player(self, game_code: str, user_uuid: str) -> Player:
         cursor: sqlite3.Cursor = self._db.cursor()
@@ -185,8 +192,7 @@ class Store:
 
     def update_game_state(self, code: str, state: GameState):
         self._db.execute(
-            "UPDATE game SET state=? WHERE code=?",
-            (state.name, code),
+            "UPDATE game SET state=? WHERE code=?", (state.name, code),
         )
         self._db.commit()
 
@@ -194,10 +200,45 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
         return bool(
             cursor.execute(
-                "SELECT name FROM game_user WHERE name=? and game_code=?",
-                [name, code]
+                "SELECT LOWER(name) FROM game_user WHERE name=? and game_code=?",
+                [name.lower().strip(), code]
             ).fetchone()
         )
+
+    def get_current_round_number(self, code: str) -> Optional[int]:
+        cursor: sqlite3.Cursor = self._db.cursor()
+        db_round_number = cursor.execute(
+            "SELECT number FROM round WHERE game_code=? and current=?", [code, True]
+        ).fetchone()
+
+        if not db_round_number:
+            return None
+
+        return db_round_number["number"]
+
+    def create_next_round(self, code: str) -> int:
+        old_number = self.get_current_round_number(code)
+        new_number = old_number + 1 if old_number else 0
+
+        # Remove current from any old rounds in the game
+        self._db.execute("UPDATE round SET current=FALSE WHERE game_code=?", (code,))
+
+        # Add the new round
+        self._db.execute(
+            "INSERT INTO round (number, game_code, current) VALUES (?, ?, True)",
+            (new_number, code)
+        )
+
+        self._db.commit()
+        return new_number
+
+    def get_game_round_prompts(self, code: str) -> Set[str]:
+        """Get the prompts submitted for the current round of the given game code"""
+        cursor: sqlite3.Cursor = self._db.cursor()
+        cursor.execute("SELECT prompt FROM round_prompt WHERE game_code=?")
+
+    def submit_prompt(self, code: str, uuid: str, prompt: str):
+        cursor: sqlite3.Cursor = self._db.cursor()
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

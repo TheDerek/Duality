@@ -14,7 +14,7 @@ class ResponseGenerator:
                 "players": self._generate_players(game_code, user_uuid),
                 "admin": self._store.is_admin_of_game(user_uuid, game_code),
                 "currentPlayer": self._generate_player(game_code, user_uuid),
-                "gameState": self._store.get_game_state(game_code),
+                "gameState": self._store.get_game_state(game_code).name,
                 "uuid": user_uuid,
             }
         }

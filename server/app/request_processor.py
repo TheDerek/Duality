@@ -7,7 +7,7 @@ from websockets.server import WebSocketServerProtocol
 from app.response_generator import ResponseGenerator
 from app.request_dispatcher import RequestDispatcher
 from app.store import Store, Player, GameState
-from app.exceptions import LobbyError, PromptError, WaitingRoomError
+from app.exceptions import LobbyError, PromptError, WaitingRoomError, DatabaseError
 from app.constants import MINIMUM_PLAYERS
 
 
@@ -49,7 +49,7 @@ async def join_game(client: WebClient, request: dict):
     already_in_game: bool = store.is_user_in_game(uuid, code)
 
     if not already_in_game:
-        if store.get_game_state(code) != "WAITING_ROOM":
+        if store.get_game_state(code) != GameState.WAITING_ROOM:
             raise LobbyError("Game has already started")
 
         if store.game_has_name(code, name):
@@ -87,6 +87,9 @@ async def start_game(client: WebClient, request: dict):
     code: str = request["gameCode"]
     uuid: str = store.get_uuid(client)
 
+    if store.get_game_state(code) != GameState.WAITING_ROOM:
+        raise WaitingRoomError("Game already started")
+
     player: Player = store.get_player(code, uuid)
 
     if not player.admin:
@@ -100,6 +103,9 @@ async def start_game(client: WebClient, request: dict):
     # Update the game state in the db so players who rejoin start in the right state
     store.update_game_state(code, GameState.SUBMIT_ATTRIBUTES)
 
+    # Create the first round of the game
+    store.create_next_round(code)
+
     response = response_generator.generate_update_game_state(GameState.SUBMIT_ATTRIBUTES)
     await asyncio.gather(
         *[
@@ -109,12 +115,13 @@ async def start_game(client: WebClient, request: dict):
     )
 
 
-# @dispatcher.request("submitPrompt")
-# async def submit_prompt(client: WebClient, request: dict):
-#     user = store.get_user(client)
-#     game = user.current_game
-#
-#     if game.state != State.SUBMIT_ATTRIBUTES:
-#         raise PromptError("Incorrect game state")
-#
-#     store.add_prompt(user, request["prompt"])
+@dispatcher.request("submitPrompt")
+async def submit_prompt(client: WebClient, request: dict):
+    code: str = request["gameCode"]
+    uuid: str = store.get_uuid(client)
+
+    if store.get_game_state(code) != GameState.SUBMIT_ATTRIBUTES:
+        raise PromptError("Incorrect game state")
+
+    # TODO: Check if the game round already has the prompt being submitted
+    # TODO: Check if the user has submitted all their prompts already

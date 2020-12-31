@@ -22,8 +22,8 @@ const initialState = {
   minimumPlayers: 3,
   gameState: GAME_STATES.LOBBY,
   presetLobbyFormValues: {
-    name: localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME),
-    gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE)
+    name: localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME) || "",
+    gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE) || ""
   },
   players: [],
   errors: [],
