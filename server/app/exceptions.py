@@ -31,3 +31,13 @@ class PromptError(RequestError):
 class DatabaseError(RequestError):
     def __init__(self, message: str):
         super().__init__(ErrorType.DATABASE_ERROR, message)
+
+
+class WaitingRoomError(RequestError):
+    def __init__(self, message: str):
+        super().__init__(ErrorType.WAITING_ROOM_ERROR, message)
+
+
+class LobbyError(RequestError):
+    def __init__(self, message: str):
+        super().__init__(ErrorType.LOBBY_ERROR, message)

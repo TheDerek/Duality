@@ -9,11 +9,6 @@ from app.user import User
 from app.exceptions import PromptError
 
 
-class State(Enum):
-    WAITING_ROOM = auto()
-    SUBMIT_ATTRIBUTES = auto()
-
-
 @dataclass()
 class Round:
     number: int

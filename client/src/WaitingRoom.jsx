@@ -1,6 +1,8 @@
 import React from "react";
 import {connect} from "react-redux";
+
 import { startGame } from "./actions";
+import Errors from "./Errors";
 
 function Player(props) {
   let listClass = "list-group-item";
@@ -25,7 +27,7 @@ function Player(props) {
 
 class WaitingRoom extends React.Component {
   startGame = () => {
-    this.props.startGame();
+    this.props.startGame(this.props.gameCode);
     console.log("Start game button clicked")
   };
 
@@ -39,6 +41,7 @@ class WaitingRoom extends React.Component {
           Waiting room
         </div>
         <div className="card-body">
+          <Errors errors={this.props.errors}/>
           <h4 className="card-title">Big Boss Battle</h4>
           <p className="card-text">
             The fun party game in which you test your friends knowledge and try
@@ -79,6 +82,7 @@ class WaitingRoom extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    errors: state.errors,
     players: state.players,
     gameCode: state.gameCode,
     admin: state.admin,

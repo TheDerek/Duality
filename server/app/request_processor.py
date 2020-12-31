@@ -1,16 +1,17 @@
 import asyncio
 
+from typing import List
+
 from websockets.server import WebSocketServerProtocol
 
 from app.response_generator import ResponseGenerator
 from app.request_dispatcher import RequestDispatcher
-from app.store import Store, Player
-from app.exceptions import RequestError, ErrorType, PromptError
-from app.game import Game, State
+from app.store import Store, Player, GameState
+from app.exceptions import LobbyError, PromptError, WaitingRoomError
+from app.constants import MINIMUM_PLAYERS
+
 
 WebClient = WebSocketServerProtocol
-
-MINIMUM_PLAYERS = 3
 
 dispatcher = RequestDispatcher()
 store = Store()
@@ -43,11 +44,20 @@ async def on_create_game(client: WebClient, request: dict):
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
     code: str = request["gameCode"]
+    name: str = request["playerName"]
     uuid: str = store.get_or_create_user(client, request["uuid"])
     already_in_game: bool = store.is_user_in_game(uuid, code)
 
     if not already_in_game:
-        players = store.get_players(code)
+        if store.get_game_state(code) != "WAITING_ROOM":
+            raise LobbyError("Game has already started")
+
+        if store.game_has_name(code, name):
+            raise LobbyError(f"Name '{name}' is already in use for this game, please "
+                             f"choose another name")
+
+        # Get the players in the game before the user joins
+        old_players = store.get_players(code)
 
         store.add_user_to_game(
             client, uuid, code, request["playerName"]
@@ -57,7 +67,7 @@ async def join_game(client: WebClient, request: dict):
         await asyncio.gather(
             *[
                 dispatcher.add_to_message_queue(player.client, response)
-                for player in players
+                for player in old_players
             ]
         )
     else:
@@ -74,45 +84,37 @@ async def join_game(client: WebClient, request: dict):
 
 @dispatcher.request("startGame")
 async def start_game(client: WebClient, request: dict):
-    user = store.get_user(client)
+    code: str = request["gameCode"]
+    uuid: str = store.get_uuid(client)
 
-    if not user.current_game:
-        raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not in a game to start")
+    player: Player = store.get_player(code, uuid)
 
-    game: Game = user.current_game
-    store.set_game_state(game, State.SUBMIT_ATTRIBUTES)
+    if not player.admin:
+        raise WaitingRoomError("Not in a game to start")
 
-    if len(game.players) < MINIMUM_PLAYERS:
-        raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not enough players to start")
+    players: List[Player] = store.get_players(code)
 
-    if not game.admin == user:
-        raise RequestError(ErrorType.WAITING_ROOM_ERROR, "Not admin of game")
+    if len(players) < MINIMUM_PLAYERS:
+        raise WaitingRoomError("Not enough players to start")
 
-    def response(player):
-        return {
-            "startedGame": {
-                "gameCode": game.code,
-                "players": game.get_players_response(player),
-                "currentPlayer": player.join_game_json(user, True),
-                "admin": game.admin == player,
-                "gameState": game.state.name
-            }
-        }
+    # Update the game state in the db so players who rejoin start in the right state
+    store.update_game_state(code, GameState.SUBMIT_ATTRIBUTES)
 
+    response = response_generator.generate_update_game_state(GameState.SUBMIT_ATTRIBUTES)
     await asyncio.gather(
         *[
-            dispatcher.add_to_message_queue(player.web_client, response(user))
-            for player in game.players
+            dispatcher.add_to_message_queue(player.client, response)
+            for player in players
         ]
     )
 
 
-@dispatcher.request("submitPrompt")
-async def submit_prompt(client: WebClient, request: dict):
-    user = store.get_user(client)
-    game = user.current_game
-
-    if game.state != State.SUBMIT_ATTRIBUTES:
-        raise PromptError("Incorrect game state")
-
-    store.add_prompt(user, request["prompt"])
+# @dispatcher.request("submitPrompt")
+# async def submit_prompt(client: WebClient, request: dict):
+#     user = store.get_user(client)
+#     game = user.current_game
+#
+#     if game.state != State.SUBMIT_ATTRIBUTES:
+#         raise PromptError("Incorrect game state")
+#
+#     store.add_prompt(user, request["prompt"])

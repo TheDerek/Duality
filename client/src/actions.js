@@ -55,9 +55,10 @@ export function setUuid() {
   })
 }
 
-export function startGame(playerName) {
+export function startGame(gameCode) {
   return send({
     startGame: {
+      gameCode: gameCode
     }
   });
 }

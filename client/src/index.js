@@ -64,13 +64,10 @@ function messageReducer(state, name, data) {
         ]
       };
     }
-    case "startedGame": {
+    case "updateGameState": {
       return {
         ...state,
-        gameState: data.gameState,
-        players: data.players,
-        admin: data.admin,
-        currentPlayer: data.currentPlayer
+        gameState: data.gameState
       };
     }
     default:

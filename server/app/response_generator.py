@@ -1,6 +1,6 @@
 from typing import List
 
-from app.store import Store, Player
+from app.store import Store, Player, GameState
 
 
 class ResponseGenerator:
@@ -23,6 +23,13 @@ class ResponseGenerator:
         return {
             "playerJoinedGame": {
                 "player": self._generate_player(code, uuid)
+            }
+        }
+
+    def generate_update_game_state(self, state: GameState):
+        return {
+            "updateGameState": {
+                "gameState": state.name
             }
         }
 
