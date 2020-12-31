@@ -6,6 +6,7 @@ class ErrorType(Enum):
     LOBBY_ERROR = auto()
     WAITING_ROOM_ERROR = auto()
     PROMPT_SUBMISSION_ERROR = auto()
+    DATABASE_ERROR = auto()
 
 
 class RequestError(Exception):
@@ -25,3 +26,8 @@ class RequestError(Exception):
 class PromptError(RequestError):
     def __init__(self, message: str):
         super().__init__(ErrorType.PROMPT_SUBMISSION_ERROR, message)
+
+
+class DatabaseError(RequestError):
+    def __init__(self, message: str):
+        super().__init__(ErrorType.DATABASE_ERROR, message)

@@ -4,7 +4,7 @@ from websockets.server import WebSocketServerProtocol
 
 from app.response_generator import ResponseGenerator
 from app.request_dispatcher import RequestDispatcher
-from app.store import Store
+from app.store import Store, Player
 from app.exceptions import RequestError, ErrorType, PromptError
 from app.game import Game, State
 
@@ -32,18 +32,44 @@ async def on_client_closed(web_client: WebClient):
 @dispatcher.request("createGame")
 async def on_create_game(client: WebClient, request: dict):
     uuid: str = store.get_or_create_user(client, request["uuid"])
-    game_code: str = store.create_game(uuid, request["playerName"])
+    game_code: str = store.create_game(client, uuid, request["playerName"])
 
     await dispatcher.add_to_message_queue(
         client,
-        response_generator.gen_join_game(game_code, uuid)
+        response_generator.generate_join_game(game_code, uuid)
     )
 
 
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
+    code: str = request["gameCode"]
     uuid: str = store.get_or_create_user(client, request["uuid"])
+    already_in_game: bool = store.is_user_in_game(uuid, code)
 
+    if not already_in_game:
+        players = store.get_players(code)
+
+        store.add_user_to_game(
+            client, uuid, code, request["playerName"]
+        )
+
+        response = response_generator.generate_player_joined_game(uuid, code)
+        await asyncio.gather(
+            *[
+                dispatcher.add_to_message_queue(player.client, response)
+                for player in players
+            ]
+        )
+    else:
+        # If the player was in the game previously we need to update their client with
+        # the one they've connected with
+        store.update_player_client(uuid, code, client)
+
+    # Inform the user himself that he has joined the game
+    await dispatcher.add_to_message_queue(
+        client,
+        response_generator.generate_join_game(code, uuid)
+    )
 
 
 @dispatcher.request("startGame")

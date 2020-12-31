@@ -13,6 +13,10 @@ class RequestDispatcher:
         self.on_client_closed_func = None
 
     async def add_to_message_queue(self, client: WebClient, message: dict):
+        if not client:
+            print(f"Swallowing response {message} because client has disconnected")
+            return
+
         await self.queues[client].put(message)
 
     async def get_message(self, client: WebClient):

@@ -1,12 +1,14 @@
 import random
 import string
 import sqlite3
+from collections import defaultdict
 
 from uuid import uuid4
 from typing import Dict, Optional, Set, List
 from dataclasses import dataclass
 
-from app.user import WebClient
+from websockets.server import WebSocketServerProtocol as WebClient
+from exceptions import DatabaseError
 
 
 @dataclass()
@@ -15,6 +17,7 @@ class Player:
     game_code: str
     name: str
     admin: bool
+    client: Optional[WebClient]
 
 
 class Store:
@@ -22,6 +25,7 @@ class Store:
 
     def __init__(self):
         self._users: Dict[WebClient, Optional[str]] = {}
+        self._clients: Dict[int, Optional[WebClient]] = defaultdict(lambda: None)
 
         # Disconnected users associated by their uuid
         self._disconnected_users: Set[str] = set()
@@ -37,35 +41,53 @@ class Store:
     def add_client(self, client: WebClient):
         print("Adding client")
         self._users[client] = None
+        self._clients[hash(client)] = client
 
     def remove_client(self, client):
         print("Removing client")
         uuid: str = self._users.pop(client)
+        del self._clients[hash(client)]
 
         if uuid:
             self._disconnected_users.add(uuid)
 
     def add_user_to_game(
-        self, user_uuid: str, game_code: str, user_name: str, admin=False, commit=True
-    ):
+        self,
+        client: WebClient,
+        user_uuid: str,
+        game_code: str,
+        user_name: str,
+        admin=False,
+        commit=True,
+    ) -> Player:
         # Add the user to the game
         self._db.execute(
-            "INSERT INTO game_user (game_code, user_uuid, admin, name)"
-            "VALUES (?, ?, ?, ?)",
-            (game_code, user_uuid, admin, user_name),
+            "INSERT INTO game_user (game_code, user_uuid, client_hash, admin, name)"
+            "VALUES (?, ?, ?, ?, ?)",
+            (game_code, user_uuid, hash(client), admin, user_name),
         )
 
         if commit:
             self._db.commit()
 
-    def create_game(self, admin_uuid: str, admin_name: str) -> str:
+        return Player(
+            uuid=user_uuid,
+            game_code=game_code,
+            name=user_name,
+            admin=admin,
+            client=client,
+        )
+
+    def create_game(self, client: WebClient, admin_uuid: str, admin_name: str) -> str:
         code = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
         # Create the game
         self._db.execute("INSERT INTO game (code) VALUES (?)", [code])
 
         # Add the first user (also the admin) to the game
-        self.add_user_to_game(admin_uuid, code, admin_name, admin=True, commit=False)
+        self.add_user_to_game(
+            client, admin_uuid, code, admin_name, admin=True, commit=False
+        )
 
         # Write changes to db
         self._db.commit()
@@ -105,21 +127,27 @@ class Store:
     def get_player(self, game_code: str, user_uuid: str) -> Player:
         cursor: sqlite3.Cursor = self._db.cursor()
         db_player = cursor.execute(
-            "SELECT name, admin FROM game_user WHERE game_code=? and user_uuid=?",
+            "SELECT name, admin, client_hash FROM game_user "
+            "WHERE game_code=? and user_uuid=?",
             [game_code, user_uuid],
         ).fetchone()
+
+        if not db_player:
+            raise DatabaseError(f"User {user_uuid} is not in game {user_uuid}")
 
         return Player(
             uuid=user_uuid,
             game_code=game_code,
             name=db_player["name"],
-            admin=bool(db_player["admin"])
+            admin=bool(db_player["admin"]),
+            client=self._clients[db_player["client_hash"]],
         )
 
     def get_players(self, game_code) -> List[Player]:
         cursor: sqlite3.Cursor = self._db.cursor()
         db_players = cursor.execute(
-            "SELECT name, admin, user_uuid FROM game_user WHERE game_code=?", [game_code],
+            "SELECT name, admin, user_uuid, client_hash FROM game_user WHERE game_code=?",
+            [game_code],
         )
 
         return [
@@ -127,10 +155,28 @@ class Store:
                 uuid=db_player["user_uuid"],
                 game_code=game_code,
                 name=db_player["name"],
-                admin=bool(db_player["admin"])
+                admin=bool(db_player["admin"]),
+                client=self._clients[db_player["client_hash"]],
             )
             for db_player in db_players
         ]
+
+    def is_user_in_game(self, uuid: str, code: str) -> bool:
+        cursor: sqlite3.Cursor = self._db.cursor()
+        return (
+            cursor.execute(
+                "SELECT user_uuid FROM game_user WHERE user_uuid=? and game_code=?",
+                [uuid, code],
+            ).fetchone()
+            is not None
+        )
+
+    def update_player_client(self, uuid: str, code: str, client: WebClient):
+        self._db.execute(
+            "UPDATE game_user SET client_hash=? WHERE user_uuid=? and game_code=?",
+            (hash(client), uuid, code),
+        )
+        self._db.commit()
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

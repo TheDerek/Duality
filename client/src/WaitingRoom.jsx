@@ -6,7 +6,7 @@ function Player(props) {
   let listClass = "list-group-item";
   let badge = null;
 
-  if (props.player.currentPlayer) {
+  if (props.currentPlayer) {
     listClass += " list-group-item-primary";
   }
 
@@ -58,7 +58,7 @@ class WaitingRoom extends React.Component {
           </li>
           {
             this.props.players.map((player, i) =>
-              <Player key={i} player={player}/>
+              <Player key={i} player={player} currentPlayer = {player.name === this.props.currentPlayer.name}/>
             )
           }
         </ul>
