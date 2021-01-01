@@ -46,7 +46,7 @@ class ResponseGenerator:
         response = {
             "name": player.name,
             "admin": player.admin,
-            "promptSubmissionFinished": self._store.has_finished_prompt_submission(
+            "promptSubmissionFinished": self._store.player_finished_prompt_submission(
                 game_code, user_uuid
             )
         }

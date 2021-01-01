@@ -98,21 +98,11 @@ async def start_game(client: WebClient, request: dict):
     if len(players) < MINIMUM_PLAYERS:
         raise WaitingRoomError("Not enough players to start")
 
-    # Update the game state in the db so players who rejoin start in the right state
-    store.update_game_state(code, GameState.SUBMIT_ATTRIBUTES)
-
     # Create the first round of the game
     store.create_next_round(code)
 
-    response = response_generator.generate_update_game_state(
-        GameState.SUBMIT_ATTRIBUTES
-    )
-    await asyncio.gather(
-        *[
-            dispatcher.add_to_message_queue(player.client, response)
-            for player in players
-        ]
-    )
+    # Update the game states state and inform clients
+    await change_state_and_inform(code, GameState.SUBMIT_ATTRIBUTES)
 
 
 @dispatcher.request("submitPrompt")
@@ -125,9 +115,13 @@ async def submit_prompt(client: WebClient, request: dict):
 
     store.submit_prompt(code, uuid, request["prompt"])
 
+    if store.all_prompts_submitted_for_round(code):
+        # Update the game states state and inform clients
+        await change_state_and_inform(code, GameState.DRAW_PROMPTS)
+        return
+
     # Inform the players that someone has finished the submission
-    if store.has_finished_prompt_submission(code, uuid):
-        # TODO: If all players have submitted move onto the next stage instead of
+    if store.player_finished_prompt_submission(code, uuid):
         # informing the players that the last player has submitted
         players: List[Player] = store.get_players(code)
         await asyncio.gather(
@@ -137,20 +131,41 @@ async def submit_prompt(client: WebClient, request: dict):
                     response_generator.generate_update_player(
                         code,
                         uuid,
-                        private_info=uuid == player.uuid,
-                        status="FINISHED_PROMPT_SUBMISSION"
-                        if uuid == player.uuid
-                        else None,
+                        private_info=uuid == player.uuid
                     ),
                 )
                 for player in players
             ]
         )
-    else:
-        # Otherwise just inform the submitting player of their submission status
-        await dispatcher.add_to_message_queue(
-            client,
-            response_generator.generate_update_player(
-                code, uuid, private_info=True, status="NORMAL"
-            ),
-        )
+        return
+
+    # Otherwise just inform the submitting player of their submission status
+    await dispatcher.add_to_message_queue(
+        client,
+        response_generator.generate_update_player(
+            code, uuid, private_info=True, status="NORMAL"
+        ),
+    )
+
+
+async def change_state_and_inform(game_code: str, new_state: GameState):
+    """
+    Change the games state and inform all connected users of the change
+    :param game_code: The code of the game's state to change
+    :param new_state: The new state for the game
+    """
+
+    # Update the game state in the db
+    store.update_game_state(game_code, new_state)
+
+    # Get the connected clients for this game
+    response = response_generator.generate_update_game_state(
+        new_state
+    )
+
+    await asyncio.gather(
+        *[
+            dispatcher.add_to_message_queue(client, response)
+            for client in store.get_clients_for_game(game_code)
+        ]
+    )

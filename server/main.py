@@ -46,6 +46,8 @@ async def consumer_handler(websocket, path):
         try:
             await request_dispatcher.requests[name](websocket, data)
         except Exception as e:
+            # Can't quite figure out how catching async exceptions work, this is a hack
+            # to catch RequestExceptions until I can figure out something better
             if hasattr(e, "_type"):
                 print(str(e._type) + ": " + str(e))
                 await request_dispatcher.add_to_message_queue(

@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from enum import Enum, auto
 from uuid import uuid4
-from typing import Dict, Optional, Set, List
+from typing import Dict, Optional, Set, List, Iterable
 from dataclasses import dataclass
 
 import constants
@@ -25,6 +25,7 @@ class Player:
 class GameState(Enum):
     WAITING_ROOM = auto()
     SUBMIT_ATTRIBUTES = auto()
+    DRAW_PROMPTS = auto()
 
 
 class Store:
@@ -314,9 +315,36 @@ class Store:
 
         return player_prompt_count + 1
 
-    def has_finished_prompt_submission(self, code: str, uuid: str):
+    def player_finished_prompt_submission(self, code: str, uuid: str):
         return self.player_prompt_count(code, uuid) \
             >= constants.NUMBER_OF_PROMPTS_PER_USER
+
+    def all_prompts_submitted_for_round(self, code: str) -> bool:
+        """
+        Check that all users have submitted their prompts for the games current round
+        :param code: the game code to check
+        :return: True if all players have submitted their prompts, False otherwise
+        """
+        sql = (
+           " SELECT (SELECT COUNT(*) from game_user where game_code = ?) * ? ="
+           "(SELECT COUNT(*)"
+           " FROM round_prompt"
+           " INNER JOIN round ON round.game_code = round_prompt.game_code"
+           " WHERE round_prompt.game_code = ?"
+           " AND round.current = TRUE) as finished"
+        )
+
+        cursor: sqlite3.Cursor = self._db.cursor()
+        cursor.execute(sql, (code, constants.NUMBER_OF_PROMPTS_PER_USER, code))
+        return bool(cursor.fetchone()["finished"])
+
+    def get_clients_for_game(self, game_code) -> Iterable[WebClient]:
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT client_hash FROM game_user WHERE game_code=?",
+            (game_code,)
+        )
+        return (self._clients[row["client_hash"]] for row in cursor)
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

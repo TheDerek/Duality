@@ -4,18 +4,21 @@ import {connect} from "react-redux";
 import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
 import SubmitPrompts from "./SubmitPrompts";
+import DrawPrompts from "./DrawPrompts";
 
 export const GAME_STATES = {
   LOBBY: "LOBBY",
   WAITING_ROOM: "WAITING_ROOM",
-  SUBMIT_ATTRIBUTES: "SUBMIT_ATTRIBUTES"
+  SUBMIT_ATTRIBUTES: "SUBMIT_ATTRIBUTES",
+  DRAW_PROMPTS: "DRAW_PROMPTS"
 };
 
 class App extends React.Component {
   #gameStates = {
     [GAME_STATES.LOBBY]: <Lobby/>,
     [GAME_STATES.WAITING_ROOM]: <WaitingRoom/>,
-    [GAME_STATES.SUBMIT_ATTRIBUTES]: <SubmitPrompts/>
+    [GAME_STATES.SUBMIT_ATTRIBUTES]: <SubmitPrompts/>,
+    [GAME_STATES.DRAW_PROMPTS]: <DrawPrompts/>
   };
 
   getGameState() {
