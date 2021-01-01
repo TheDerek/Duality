@@ -200,7 +200,7 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
         return bool(
             cursor.execute(
-                "SELECT LOWER(name) FROM game_user WHERE name=? and game_code=?",
+                "SELECT 1 FROM game_user WHERE LOWER(name)=? and game_code=?",
                 [name.lower().strip(), code],
             ).fetchone()
         )

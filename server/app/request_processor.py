@@ -42,8 +42,8 @@ async def on_create_game(client: WebClient, request: dict):
 
 @dispatcher.request("joinGame")
 async def join_game(client: WebClient, request: dict):
-    code: str = request["gameCode"]
-    name: str = request["playerName"]
+    code: str = request["gameCode"].upper().strip()
+    name: str = request["playerName"].strip()
     uuid: str = store.get_or_create_user(client, request["uuid"])
     already_in_game: bool = store.is_user_in_game(uuid, code)
 
