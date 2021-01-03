@@ -1,7 +1,5 @@
 from typing import List
 
-import constants
-
 from app.store import Store, Player, GameState
 
 
