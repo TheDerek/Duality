@@ -204,6 +204,10 @@ class SketchPad extends React.Component {
     )
   }
 
+  getPng() {
+    return this.canvasRef.current.toDataURL("image/png");
+  }
+
   render() {
     return (
       <div>
