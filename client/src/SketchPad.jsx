@@ -51,7 +51,7 @@ class SketchPad extends React.Component {
 
     this.state = {
       selectedColor: this.colors[0],
-      selectedThickness: this.thicknesses[0]
+      selectedThickness: this.thicknesses[1]
     }
 
     this.canvasRef = React.createRef();
