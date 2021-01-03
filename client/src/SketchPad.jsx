@@ -34,20 +34,24 @@ class SketchPad extends React.Component {
     this.thicknesses = [
       {
         name: "Thin",
-        value: 2
+        value: 2,
+        level: 1
       },
       {
         name: "Medium",
-        value: 5
+        value: 5,
+        level: 2
       },
       {
         name: "Thick",
-        value: 7
+        value: 10,
+        level: 3
       }
     ]
 
     this.state = {
-      selectedColor: this.colors[0]
+      selectedColor: this.colors[0],
+      selectedThickness: this.thicknesses[0]
     }
 
     this.canvasRef = React.createRef();
@@ -65,9 +69,6 @@ class SketchPad extends React.Component {
   componentDidMount() {
     const canvas = this.canvasRef.current;
     const context = canvas.getContext("2d");
-
-    context.strokeStyle = this.state.selectedColor.value;
-    context.lineWidth = 5;
     context.lineCap = "round";
 
     canvas.addEventListener('mousedown', e => {
@@ -104,9 +105,11 @@ class SketchPad extends React.Component {
   beginStroke(context) {
     context.beginPath();
     context.strokeStyle = this.state.selectedColor.value;
+    context.lineWidth = this.state.selectedThickness.value;
     this.isDrawing = true;
     this.strokes.push({
       color: this.state.selectedColor.value,
+      thickness: this.state.selectedThickness.value,
       lines: []
     });
   }
@@ -148,6 +151,7 @@ class SketchPad extends React.Component {
     this.strokes.forEach(stroke => {
       context.beginPath();
       context.strokeStyle = stroke.color
+      context.lineWidth = stroke.thickness
 
       stroke.lines.forEach(line => {
         context.moveTo(line.moveTo.x, line.moveTo.y);
@@ -175,6 +179,29 @@ class SketchPad extends React.Component {
         selectedColor: this.colors.find(color => color.name === colorName)
       })
     };
+  }
+
+  setThickness = (thickness) => {
+    return () => {
+      console.log("Setting thickness to " + thickness)
+      this.setState({
+        ...this.state,
+        selectedThickness: thickness
+      })
+    };
+  }
+
+  renderThicknessSymbol = (thickness) => {
+    const remaining = this.thicknesses[this.thicknesses.length - 1].level - thickness.level;
+
+    return (
+      <code style={{color: "black"}}>
+        <b>
+          { [...Array(thickness.level).keys()].map(() => <span>&#x25A0;</span>) }
+          { [...Array(remaining).keys()].map(() => <span>&nbsp;</span>) }
+        </b>
+      </code>
+    )
   }
 
   render() {
@@ -207,17 +234,18 @@ class SketchPad extends React.Component {
           <button
             className="btn btn-outline-secondary me-2 dropdown-toggle"
             data-bs-toggle="dropdown">
-            <span style={{color: this.state.selectedColor.value}} className="me-2">&#11044;</span>
-            Thickness
+            { this.renderThicknessSymbol(this.state.selectedThickness) }
+            &nbsp;&nbsp;Thickness
           </button>
           <ul className="dropdown-menu">
             {
               this.thicknesses.map((thickness, index) => (
                 <li key={index}>
                   <button
-                    // onClick={this.setColor(color.name)}
-                    className="dropdown-item">
-                    <span className="me-2">&#11044;</span> { thickness.name }
+                    onClick={this.setThickness(thickness)}
+                    className="dropdown-item text-left">
+                    { this.renderThicknessSymbol(thickness) }
+                    &nbsp;&nbsp;{ thickness.name }
                   </button>
                 </li>
               ))
