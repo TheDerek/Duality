@@ -33,13 +33,14 @@ async def producer_handler(websocket, path):
 
 async def consumer_handler(websocket, path):
     async for message in websocket:
-        print("Received message:", message)
         request = json.loads(message)
         name, data = next(iter(request.items()))
 
         if name not in request_dispatcher.requests:
             print(f"ERROR: No handler for {name} request")
             continue
+
+        print("Received request: ", name)
 
         try:
             await request_dispatcher.requests[name](websocket, data)

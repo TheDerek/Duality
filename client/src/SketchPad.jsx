@@ -90,6 +90,10 @@ class SketchPad extends React.Component {
       this.justEntered = true;
     });
 
+    canvas.addEventListener('mouseout', e => {
+      this.justEntered = true;
+    });
+
     window.addEventListener('mouseup', e => {
       if (this.isDrawing === true) {
         this.drawLine(context, this.mousePos.x, this.mousePos.y, e.offsetX, e.offsetY);

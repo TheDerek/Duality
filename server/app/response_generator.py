@@ -8,15 +8,20 @@ class ResponseGenerator:
         self._store: Store = store
 
     def generate_join_game(self, game_code: str, user_uuid: str) -> dict:
+        state: GameState = self._store.get_game_state(game_code)
+
+        if state != GameState.WAITING_ROOM and self._store.player_finished_submission(game_code, user_uuid):
+            state = GameState.WAITING_FOR_PLAYERS
+
         return {
             "joinGame": {
                 "gameCode": game_code,
-                "players": self._generate_players(game_code),
+                "players": self._generate_players(game_code, user_uuid),
                 "admin": self._store.is_admin_of_game(user_uuid, game_code),
                 "currentPlayer": self._generate_player(
                     game_code, user_uuid, private_info=True
                 ),
-                "gameState": self._store.get_game_state(game_code).name,
+                "gameState": state.name,
                 "uuid": user_uuid,
             }
         }
@@ -44,9 +49,10 @@ class ResponseGenerator:
         response = {
             "name": player.name,
             "admin": player.admin,
-            "promptSubmissionFinished": self._store.player_finished_prompt_submission(
+            "submissionFinished": self._store.player_finished_submission(
                 game_code, user_uuid
-            )
+            ),
+            "currentPlayer": private_info
         }
 
         if private_info:
@@ -57,7 +63,7 @@ class ResponseGenerator:
 
         return response
 
-    def _generate_players(self, game_code: str) -> list:
+    def _generate_players(self, game_code: str, uuid: str) -> list:
         players: List[Player] = self._store.get_players(game_code)
 
-        return [self._generate_player(game_code, player.uuid) for player in players]
+        return [self._generate_player(game_code, player.uuid, private_info=uuid == player.uuid) for player in players]

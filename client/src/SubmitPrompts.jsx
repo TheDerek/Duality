@@ -4,23 +4,6 @@ import {connect} from "react-redux";
 import {GAME_STATUS, submitPrompt} from "./actions";
 import Errors from "./Errors"
 
-
-function Player(props) {
-  return (
-    <li className="list-group-item border-0">{ props.player.name }</li>
-  )
-}
-
-function Players(props) {
-  return (
-      <ul className="list-group list-group-flush">
-        { props.players.map((player, index) => (
-          <Player key={index} player={player} />
-        )) }
-      </ul>
-    )
-}
-
 class SubmitPrompts extends React.Component {
   #PROMPT_SUBMISSIONS = 2;
   #PROMPT_MAX_LENGTH = 35;
@@ -74,7 +57,7 @@ class SubmitPrompts extends React.Component {
   };
 
   getStatusText = () => {
-    if (this.props.currentPlayer.promptSubmissionFinished) {
+    if (this.props.currentPlayer.submissionFinished) {
       return "Submissions finished, waiting on other players"
     }
 
@@ -86,7 +69,7 @@ class SubmitPrompts extends React.Component {
   };
 
   getCharacterCount = () => {
-    if (this.props.currentPlayer.promptSubmissionFinished) {
+    if (this.props.currentPlayer.submissionFinished) {
       return null;
     }
 
@@ -126,7 +109,7 @@ class SubmitPrompts extends React.Component {
               onSubmit={this.handleSubmit}
               className="input-group mb-1 mt-2">
               <input
-                disabled={this.isSubmitting() || this.props.currentPlayer.promptSubmissionFinished}
+                disabled={this.isSubmitting() || this.props.currentPlayer.submissionFinished}
                 onChange={this.handleChange}
                 value={this.state.promptValue}
                 name="attribute"
@@ -134,25 +117,11 @@ class SubmitPrompts extends React.Component {
                 className="form-control"
                 placeholder="emotionally stable" />
               <button
-                disabled={!this.canSubmit() || this.isSubmitting() || this.props.currentPlayer.promptSubmissionFinished}
+                disabled={!this.canSubmit() || this.isSubmitting() || this.props.currentPlayer.submissionFinished}
                 className="btn btn-primary">
                 Submit
               </button>
             </form>
-          </div>
-        </div>
-        <div className="card-group mt-4">
-          <div className="card">
-            <div className="card-header">
-              Waiting for
-            </div>
-            <Players players={ this.props.players.filter((player => !player.promptSubmissionFinished)) } />
-          </div>
-          <div className="card">
-            <div className="card-header">
-              Done
-            </div>
-            <Players players={ this.props.players.filter((player => player.promptSubmissionFinished)) } />
           </div>
         </div>
       </div>

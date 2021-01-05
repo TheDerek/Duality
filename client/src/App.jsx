@@ -5,12 +5,16 @@ import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
 import SubmitPrompts from "./SubmitPrompts";
 import DrawPrompts from "./DrawPrompts";
+import WaitingForPlayers from "./WaitingForPlayers";
+import DisplayResults from "./DisplayResults";
 
 export const GAME_STATES = {
   LOBBY: "LOBBY",
   WAITING_ROOM: "WAITING_ROOM",
   SUBMIT_ATTRIBUTES: "SUBMIT_ATTRIBUTES",
-  DRAW_PROMPTS: "DRAW_PROMPTS"
+  DRAW_PROMPTS: "DRAW_PROMPTS",
+  WAITING_FOR_PLAYERS: "WAITING_FOR_PLAYERS",
+  DISPLAY_RESULTS: "DISPLAY_RESULTS"
 };
 
 class App extends React.Component {
@@ -18,7 +22,9 @@ class App extends React.Component {
     [GAME_STATES.LOBBY]: <Lobby/>,
     [GAME_STATES.WAITING_ROOM]: <WaitingRoom/>,
     [GAME_STATES.SUBMIT_ATTRIBUTES]: <SubmitPrompts/>,
-    [GAME_STATES.DRAW_PROMPTS]: <DrawPrompts/>
+    [GAME_STATES.DRAW_PROMPTS]: <DrawPrompts/>,
+    [GAME_STATES.WAITING_FOR_PLAYERS]: <WaitingForPlayers/>,
+    [GAME_STATES.DISPLAY_RESULTS]: <DisplayResults/>,
   };
 
   getGameState() {

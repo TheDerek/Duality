@@ -122,29 +122,66 @@ async def submit_prompt(client: WebClient, request: dict):
 
     # Inform the players that someone has finished the submission
     if store.player_finished_prompt_submission(code, uuid):
-        # informing the players that the last player has submitted
-        players: List[Player] = store.get_players(code)
-        await asyncio.gather(
-            *[
-                dispatcher.add_to_message_queue(
-                    player.client,
-                    response_generator.generate_update_player(
-                        code,
-                        uuid,
-                        private_info=uuid == player.uuid
-                    ),
-                )
-                for player in players
-            ]
+        # informing the players that this guy has finished his submissions
+        await update_player(code, uuid)
+
+        # Yeet the player into the waiting for players state
+        await dispatcher.add_to_message_queue(
+            client,
+            response_generator.generate_update_game_state(GameState.WAITING_FOR_PLAYERS)
         )
         return
 
-    # Otherwise just inform the submitting player of their submission status
+    # If the player still has to submit some prompts then inform them of that
     await dispatcher.add_to_message_queue(
         client,
         response_generator.generate_update_player(
             code, uuid, private_info=True, status="NORMAL"
         ),
+    )
+
+
+@dispatcher.request("submitDrawing")
+async def submit_drawing(client: WebClient, request: dict):
+    code: str = request["gameCode"]
+    drawing: str = request["drawing"]
+
+    uuid: str = store.get_uuid(client)
+
+    if store.get_game_state(code) != GameState.DRAW_PROMPTS:
+        raise PromptError("Incorrect game state")
+
+    if store.has_submitted_drawing(code, uuid):
+        raise PromptError("User already submitted drawing for this round")
+
+    store.add_round_drawing(code, uuid, drawing)
+
+    if store.all_drawings_submitted_for_round(code):
+        await change_state_and_inform(code, GameState.DISPLAY_RESULTS)
+    else:
+        # Otherwise just redirect the user to the waiting screen
+        await dispatcher.add_to_message_queue(
+            client,
+            response_generator.generate_update_game_state(GameState.WAITING_FOR_PLAYERS)
+        )
+
+
+async def update_player(code: str, uuid: str):
+    """Update the given player for all clients in the current game"""
+    # informing the players that this guy has finished his submissions
+    players: List[Player] = store.get_players(code)
+    await asyncio.gather(
+        *[
+            dispatcher.add_to_message_queue(
+                player.client,
+                response_generator.generate_update_player(
+                    code,
+                    uuid,
+                    private_info=uuid == player.uuid
+                ),
+            )
+            for player in players
+        ]
     )
 
 

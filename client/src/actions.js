@@ -10,6 +10,7 @@ export const GAME_STATUS = {
   JOINING_GAME: "JOINING_GAME",
   CREATING_GAME: "CREATING_GAME",
   SUBMITTING_PROMPT: "SUBMITTING_PROMPT",
+  SUBMITTING_DRAWING: "SUBMITTING_DRAWING",
   FINISHED_PROMPT_SUBMISSION: "FINISHED_PROMPT_SUBMISSION"
 };
 
@@ -60,6 +61,15 @@ export function startGame(gameCode) {
   return send({
     startGame: {
       gameCode: gameCode
+    }
+  });
+}
+
+export function submitDrawing(gameCode, drawing) {
+  return send({
+    submitDrawing: {
+      gameCode: gameCode,
+      drawing: drawing
     }
   });
 }

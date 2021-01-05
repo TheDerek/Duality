@@ -27,6 +27,8 @@ class GameState(Enum):
     WAITING_ROOM = auto()
     SUBMIT_ATTRIBUTES = auto()
     DRAW_PROMPTS = auto()
+    WAITING_FOR_PLAYERS = auto()
+    DISPLAY_RESULTS = auto()
 
 
 class Store:
@@ -339,6 +341,25 @@ class Store:
         cursor.execute(sql, (code, constants.NUMBER_OF_PROMPTS_PER_USER, code))
         return bool(cursor.fetchone()["finished"])
 
+    def all_drawings_submitted_for_round(self, code: str) -> bool:
+        """
+        Check that all users have submitted their drawings for the games current round
+        :param code: the game code to check
+        :return: True if all players have submitted their prompts, False otherwise
+        """
+        sql = (
+            " SELECT (SELECT COUNT(*) from game_user where game_code = ?) ="
+            "(SELECT COUNT(*)"
+            " FROM round_drawing"
+            " INNER JOIN round ON round.game_code = round_drawing.game_code"
+            " WHERE round_drawing.game_code = ?"
+            " AND round.current = TRUE) as finished"
+        )
+
+        cursor: sqlite3.Cursor = self._db.cursor()
+        cursor.execute(sql, (code, code))
+        return bool(cursor.fetchone()["finished"])
+
     def get_clients_for_game(self, game_code) -> Iterable[WebClient]:
         cursor = self._db.cursor()
         cursor.execute(
@@ -346,6 +367,39 @@ class Store:
             (game_code,)
         )
         return (self._clients[row["client_hash"]] for row in cursor)
+
+    def has_submitted_drawing(self, code: str, uuid: str):
+        cursor: sqlite3.Cursor = self._db.cursor()
+        return bool(
+            cursor.execute(
+                "SELECT 1 FROM round_drawing "
+                "INNER JOIN round on round_drawing.round_number = round.number "
+                "WHERE round_drawing.game_code=? AND round_drawing.user_uuid=? AND round.current = TRUE",
+                (code, uuid)
+            ).fetchone()
+        )
+
+    def add_round_drawing(self, code: str, uuid: str, drawing: str):
+        self._db.execute(
+            "INSERT INTO round_drawing (game_code, user_uuid, drawing, round_number) "
+            "SELECT ?, ?, ?, round.number "
+            "FROM round WHERE game_code=? AND current=TRUE",
+            (code, uuid, drawing, code)
+        )
+        self._db.commit()
+
+    def player_finished_submission(self, code: str, uuid: str) -> bool:
+        game_state = self.get_game_state(code)
+
+        if game_state == GameState.SUBMIT_ATTRIBUTES:
+            return self.player_finished_prompt_submission(code, uuid)
+
+        if game_state == GameState.DRAW_PROMPTS:
+            return self.has_submitted_drawing(code, uuid)
+
+        # We don't really care that much about the value otherwise but return False for
+        # consistency
+        return False
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()
