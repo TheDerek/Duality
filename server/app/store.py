@@ -28,7 +28,7 @@ class GameState(Enum):
     SUBMIT_ATTRIBUTES = auto()
     DRAW_PROMPTS = auto()
     WAITING_FOR_PLAYERS = auto()
-    DISPLAY_RESULTS = auto()
+    ASSIGN_PROMPTS = auto()
 
 
 class Store:

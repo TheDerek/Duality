@@ -157,7 +157,7 @@ async def submit_drawing(client: WebClient, request: dict):
     store.add_round_drawing(code, uuid, drawing)
 
     if store.all_drawings_submitted_for_round(code):
-        await change_state_and_inform(code, GameState.DISPLAY_RESULTS)
+        await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)
     else:
         # Otherwise just redirect the user to the waiting screen
         await dispatcher.add_to_message_queue(
