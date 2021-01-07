@@ -24,10 +24,10 @@ class AssignPrompts extends React.Component {
         <div className="">
           <div className="row row-cols-1 row-cols-sm-3">
             <div className="col text-center d-grid mb-3">
-              <button type="button" className="btn btn-outline-primary">Bed times</button>
+              <button type="button" className="btn btn-outline-primary">{ this.props.player.private.prompts[0] }</button>
             </div>
             <div className="col text-center d-grid mb-3">
-              <button type="button" className="btn btn-outline-primary">Great strength</button>
+              <button type="button" className="btn btn-outline-primary">{ this.props.player.private.prompts[1] }</button>
             </div>
             <div className="col text-center d-grid mb-3">
               <button type="button" className="btn btn-outline-secondary">
@@ -49,7 +49,7 @@ class AssignPrompts extends React.Component {
 
 function mapStateToProps(state) {
   return {
-
+    player: state.currentPlayer
   }
 }
 

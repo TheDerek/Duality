@@ -4,6 +4,7 @@ from typing import List
 
 from websockets.server import WebSocketServerProtocol
 
+from app import game_logic
 from app.response_generator import ResponseGenerator
 from app.request_dispatcher import RequestDispatcher
 from app.store import Store, Player, GameState
@@ -157,6 +158,8 @@ async def submit_drawing(client: WebClient, request: dict):
     store.add_round_drawing(code, uuid, drawing)
 
     if store.all_drawings_submitted_for_round(code):
+        # Prepare the prompt assignment phase
+        game_logic.prepare_assign_prompts(store, code)
         await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)
     else:
         # Otherwise just redirect the user to the waiting screen

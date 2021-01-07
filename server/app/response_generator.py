@@ -56,9 +56,12 @@ class ResponseGenerator:
         }
 
         if private_info:
+            prompts = self._store.get_prompts(game_code, user_uuid)
+
             response["private"] = {
                 "uuid": user_uuid,
                 "currentPromptNumber": prompt_count + 1,
+                "prompts": list(prompts)
             }
 
         return response

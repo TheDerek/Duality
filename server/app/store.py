@@ -23,6 +23,14 @@ class Player:
     client: Optional[WebClient]
 
 
+@dataclass()
+class Drawing:
+    round_number: str
+    game_code: str
+    user_uuid: str
+    sequence: Optional[int]
+
+
 class GameState(Enum):
     WAITING_ROOM = auto()
     SUBMIT_ATTRIBUTES = auto()
@@ -400,6 +408,23 @@ class Store:
         # We don't really care that much about the value otherwise but return False for
         # consistency
         return False
+
+    def get_current_round_drawings(self, game_code: str):
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT round_number, round_drawing.game_code as game_code, user_uuid, sequence FROM round_drawing "
+            "INNER JOIN round on round_drawing.round_number=round.number AND round_drawing.game_code = round.game_code "
+            "WHERE round.current=TRUE AND round_drawing.game_code=?",
+            (game_code,)
+        )
+        return [Drawing(**row) for row in cursor]
+
+    def update_drawings_sequence(self, drawings: List[Drawing]):
+        self._db.executemany(
+            "UPDATE round_drawing SET sequence=? WHERE round_number=? AND game_code=? AND user_uuid=?",
+            ((drawing.sequence, drawing.round_number, drawing.game_code, drawing.user_uuid) for drawing in drawings)
+        )
+        self._db.commit()
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

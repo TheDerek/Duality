@@ -31,6 +31,7 @@ const initialState = {
   admin: false,
   currentPlayer: null,
   promptSubmissionNumber: 1,
+  currentDrawing: null,
   status: GAME_STATUS.NORMAL
 };
 
