@@ -77,7 +77,7 @@ class Store:
     ) -> Player:
         # Add the user to the game
         self._db.execute(
-            "INSERT INTO game_user (game_code, user_uuid, client_hash, admin, name)"
+            "INSERT INTO player (game_code, user_uuid, client_hash, admin, name)"
             "VALUES (?, ?, ?, ?, ?)",
             (game_code, user_uuid, hash(client), admin, user_name.strip()),
         )
@@ -128,7 +128,7 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
         return bool(
             cursor.execute(
-                "SELECT admin FROM game_user WHERE user_uuid=? and game_code=?",
+                "SELECT admin FROM player WHERE user_uuid=? and game_code=?",
                 [user_uuid, game_code],
             ).fetchone()["admin"]
         )
@@ -147,7 +147,7 @@ class Store:
     def get_player(self, game_code: str, user_uuid: str) -> Player:
         cursor: sqlite3.Cursor = self._db.cursor()
         db_player = cursor.execute(
-            "SELECT name, admin, client_hash FROM game_user "
+            "SELECT name, admin, client_hash FROM player "
             "WHERE game_code=? and user_uuid=?",
             [game_code, user_uuid],
         ).fetchone()
@@ -166,7 +166,7 @@ class Store:
     def get_players(self, game_code) -> List[Player]:
         cursor: sqlite3.Cursor = self._db.cursor()
         db_players = cursor.execute(
-            "SELECT name, admin, user_uuid, client_hash FROM game_user WHERE game_code=?",
+            "SELECT name, admin, user_uuid, client_hash FROM player WHERE game_code=?",
             [game_code],
         )
 
@@ -185,7 +185,7 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
         return (
             cursor.execute(
-                "SELECT user_uuid FROM game_user WHERE user_uuid=? and game_code=?",
+                "SELECT user_uuid FROM player WHERE user_uuid=? and game_code=?",
                 [uuid, code],
             ).fetchone()
             is not None
@@ -193,7 +193,7 @@ class Store:
 
     def update_player_client(self, uuid: str, code: str, client: WebClient):
         self._db.execute(
-            "UPDATE game_user SET client_hash=? WHERE user_uuid=? and game_code=?",
+            "UPDATE player SET client_hash=? WHERE user_uuid=? and game_code=?",
             (hash(client), uuid, code),
         )
         self._db.commit()
@@ -211,7 +211,7 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
         return bool(
             cursor.execute(
-                "SELECT 1 FROM game_user WHERE LOWER(name)=? and game_code=?",
+                "SELECT 1 FROM player WHERE LOWER(name)=? and game_code=?",
                 [name.lower().strip(), code],
             ).fetchone()
         )
@@ -247,13 +247,13 @@ class Store:
         """Get the prompts submitted for the current round of the given game code"""
         cursor: sqlite3.Cursor = self._db.cursor()
 
-        sql = "SELECT prompt FROM round_prompt " \
-              "INNER JOIN round ON round.game_code=round_prompt.game_code " \
-              "WHERE round_prompt.game_code=? and round.current = True"
+        sql = "SELECT prompt FROM prompt " \
+              "INNER JOIN round ON round.game_code=prompt.game_code " \
+              "WHERE prompt.game_code=? and round.current = True"
         fields = [code]
 
         if uuid:
-            sql += " AND round_prompt.user_uuid=?"
+            sql += " AND prompt.user_uuid=?"
             fields += [uuid]
 
         cursor.execute(sql, fields)
@@ -268,10 +268,10 @@ class Store:
         """
         cursor: sqlite3.Cursor = self._db.cursor()
         cursor.execute(
-            "SELECT count(prompt) as count FROM round_prompt "
-            "INNER JOIN round ON round.game_code=round_prompt.game_code "
-            "WHERE round.current=TRUE AND round_prompt.game_code=? "
-            "AND round_prompt.user_uuid=?",
+            "SELECT count(prompt) as count FROM prompt "
+            "INNER JOIN round ON round.game_code=prompt.game_code "
+            "WHERE round.current=TRUE AND prompt.game_code=? "
+            "AND prompt.user_uuid=?",
             (code, uuid)
         )
 
@@ -285,10 +285,10 @@ class Store:
         """
         cursor: sqlite3.Cursor = self._db.cursor()
         return cursor.execute(
-            "SELECT 1 FROM round_prompt "
-            "INNER JOIN round ON round.game_code=round_prompt.game_code "
-            "WHERE round.current=TRUE AND round_prompt.game_code=? "
-            "AND lower(round_prompt.prompt)=lower(?)",
+            "SELECT 1 FROM prompt "
+            "INNER JOIN round ON round.game_code=prompt.game_code "
+            "WHERE round.current=TRUE AND prompt.game_code=? "
+            "AND lower(prompt.prompt)=lower(?)",
             (code, prompt),
         ).fetchone() is not None
 
@@ -316,7 +316,7 @@ class Store:
         # The prompts are 0-indexed in the database, so we can just return the current
         # count as the new prompt index
         self._db.execute(
-            "INSERT INTO round_prompt "
+            "INSERT INTO prompt "
             "(game_code, round_number, user_uuid, prompt_number, prompt) "
             "VALUES (?, ?, ?, ?, ?)",
             (code, round_number, uuid, player_prompt_count, prompt)
@@ -337,11 +337,11 @@ class Store:
         :return: True if all players have submitted their prompts, False otherwise
         """
         sql = (
-           " SELECT (SELECT COUNT(*) from game_user where game_code = ?) * ? ="
+           " SELECT (SELECT COUNT(*) from player where game_code = ?) * ? ="
            "(SELECT COUNT(*)"
-           " FROM round_prompt"
-           " INNER JOIN round ON round.game_code = round_prompt.game_code"
-           " WHERE round_prompt.game_code = ?"
+           " FROM prompt"
+           " INNER JOIN round ON round.game_code = prompt.game_code"
+           " WHERE prompt.game_code = ?"
            " AND round.current = TRUE) as finished"
         )
 
@@ -356,11 +356,11 @@ class Store:
         :return: True if all players have submitted their prompts, False otherwise
         """
         sql = (
-            " SELECT (SELECT COUNT(*) from game_user where game_code = ?) ="
+            " SELECT (SELECT COUNT(*) from player where game_code = ?) ="
             "(SELECT COUNT(*)"
-            " FROM round_drawing"
-            " INNER JOIN round ON round.game_code = round_drawing.game_code"
-            " WHERE round_drawing.game_code = ?"
+            " FROM drawing"
+            " INNER JOIN round ON round.game_code = drawing.game_code"
+            " WHERE drawing.game_code = ?"
             " AND round.current = TRUE) as finished"
         )
 
@@ -371,7 +371,7 @@ class Store:
     def get_clients_for_game(self, game_code) -> Iterable[WebClient]:
         cursor = self._db.cursor()
         cursor.execute(
-            "SELECT client_hash FROM game_user WHERE game_code=?",
+            "SELECT client_hash FROM player WHERE game_code=?",
             (game_code,)
         )
         return (self._clients[row["client_hash"]] for row in cursor)
@@ -380,16 +380,16 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
         return bool(
             cursor.execute(
-                "SELECT 1 FROM round_drawing "
-                "INNER JOIN round on round_drawing.round_number = round.number "
-                "WHERE round_drawing.game_code=? AND round_drawing.user_uuid=? AND round.current = TRUE",
+                "SELECT 1 FROM drawing "
+                "INNER JOIN round on drawing.round_number = round.number "
+                "WHERE drawing.game_code=? AND drawing.user_uuid=? AND round.current = TRUE",
                 (code, uuid)
             ).fetchone()
         )
 
     def add_round_drawing(self, code: str, uuid: str, drawing: str):
         self._db.execute(
-            "INSERT INTO round_drawing (game_code, user_uuid, drawing, round_number) "
+            "INSERT INTO drawing (game_code, user_uuid, drawing, round_number) "
             "SELECT ?, ?, ?, round.number "
             "FROM round WHERE game_code=? AND current=TRUE",
             (code, uuid, drawing, code)
@@ -412,16 +412,16 @@ class Store:
     def get_current_round_drawings(self, game_code: str):
         cursor = self._db.cursor()
         cursor.execute(
-            "SELECT round_number, round_drawing.game_code as game_code, user_uuid, sequence FROM round_drawing "
-            "INNER JOIN round on round_drawing.round_number=round.number AND round_drawing.game_code = round.game_code "
-            "WHERE round.current=TRUE AND round_drawing.game_code=?",
+            "SELECT round_number, drawing.game_code as game_code, user_uuid, sequence FROM drawing "
+            "INNER JOIN round on drawing.round_number=round.number AND drawing.game_code = round.game_code "
+            "WHERE round.current=TRUE AND drawing.game_code=?",
             (game_code,)
         )
         return [Drawing(**row) for row in cursor]
 
     def update_drawings_sequence(self, drawings: List[Drawing]):
         self._db.executemany(
-            "UPDATE round_drawing SET sequence=? WHERE round_number=? AND game_code=? AND user_uuid=?",
+            "UPDATE drawing SET sequence=? WHERE round_number=? AND game_code=? AND user_uuid=?",
             ((drawing.sequence, drawing.round_number, drawing.game_code, drawing.user_uuid) for drawing in drawings)
         )
         self._db.commit()

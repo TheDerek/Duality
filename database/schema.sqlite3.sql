@@ -23,7 +23,31 @@ create table user
         unique
 );
 
-create table game_user
+create table drawing
+(
+    drawing      text,
+    round_number int     not null
+        constraint round_drawings_round_number_fk
+            references round (number)
+            on delete cascade,
+    game_code    text    not null
+        references game
+            on delete cascade,
+    user_uuid    text    not null
+        references user,
+    sequence     int,
+    id           INTEGER not null
+        constraint drawing_pk
+            primary key autoincrement
+);
+
+create unique index drawing_id_uindex
+    on drawing (id);
+
+create unique index one_drawing_per_user_per_round
+    on drawing (round_number, game_code, user_uuid);
+
+create table player
 (
     game_code   TEXT    not null
         references game
@@ -38,27 +62,7 @@ create table game_user
     unique (game_code, name)
 );
 
-create table round_drawing
-(
-    drawing      text not null,
-    round_number int  not null
-        constraint round_drawings_round_number_fk
-            references round (number)
-            on delete cascade,
-    game_code    text not null
-        references game
-            on delete cascade,
-    user_uuid    text not null
-        references user,
-    sequence     int,
-    constraint round_drawings_pk
-        unique (round_number, game_code, user_uuid)
-);
-
-create unique index unique_order
-    on round_drawing (game_code, sequence, round_number);
-
-create table round_prompt
+create table prompt
 (
     game_code     TEXT    not null
         references game
@@ -71,8 +75,16 @@ create table round_prompt
             on delete restrict,
     prompt_number INTEGER not null,
     prompt        TEXT    not null,
-    primary key (game_code, round_number, user_uuid, prompt_number),
+    id            INTEGER not null
+        constraint prompt_pk
+            primary key autoincrement,
+    drawing_id    int
+        references drawing,
+    unique (game_code, round_number, user_uuid, prompt_number),
     unique (game_code, round_number, prompt)
 );
+
+create unique index prompt_id_uindex
+    on prompt (id);
 
 
