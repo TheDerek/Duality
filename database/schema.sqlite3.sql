@@ -1,41 +1,78 @@
-BEGIN TRANSACTION;
-CREATE TABLE IF NOT EXISTS "user" (
-	"uuid"	TEXT NOT NULL UNIQUE,
-	PRIMARY KEY("uuid")
+create table game
+(
+    code  TEXT not null
+        primary key
+        unique,
+    state TEXT default 'WAITING_ROOM' not null
 );
-CREATE TABLE IF NOT EXISTS "round_prompt" (
-	"game_code"	TEXT NOT NULL,
-	"round_number"	INTEGER NOT NULL,
-	"user_uuid"	TEXT NOT NULL,
-	"prompt_number"	INTEGER NOT NULL,
-	"prompt"	TEXT NOT NULL,
-	PRIMARY KEY("game_code","round_number","user_uuid","prompt_number"),
-	FOREIGN KEY("user_uuid") REFERENCES "user"("uuid") ON DELETE RESTRICT,
-	FOREIGN KEY("game_code") REFERENCES "game"("code") ON DELETE CASCADE,
-	UNIQUE("game_code","round_number","prompt"),
-	FOREIGN KEY("round_number") REFERENCES "round_prompt"("number") ON DELETE CASCADE
+
+create table round
+(
+    number    INTEGER not null,
+    game_code TEXT    not null
+        references game
+            on delete cascade,
+    current   INTEGER not null,
+    primary key (game_code, number)
 );
-CREATE TABLE IF NOT EXISTS "game" (
-	"code"	TEXT NOT NULL UNIQUE,
-	"state"	TEXT NOT NULL DEFAULT 'WAITING_ROOM',
-	PRIMARY KEY("code")
+
+create table user
+(
+    uuid TEXT not null
+        primary key
+        unique
 );
-CREATE TABLE IF NOT EXISTS "game_user" (
-	"game_code"	TEXT NOT NULL,
-	"user_uuid"	TEXT NOT NULL,
-	"client_hash"	INTEGER NOT NULL,
-	"admin"	INTEGER NOT NULL DEFAULT 0,
-	"name"	TEXT NOT NULL,
-	PRIMARY KEY("game_code","user_uuid"),
-	FOREIGN KEY("user_uuid") REFERENCES "user"("uuid") ON DELETE RESTRICT,
-	FOREIGN KEY("game_code") REFERENCES "game"("code") ON DELETE CASCADE,
-	UNIQUE("game_code","name")
+
+create table game_user
+(
+    game_code   TEXT    not null
+        references game
+            on delete cascade,
+    user_uuid   TEXT    not null
+        references user
+            on delete restrict,
+    client_hash INTEGER not null,
+    admin       INTEGER default 0 not null,
+    name        TEXT    not null,
+    primary key (game_code, user_uuid),
+    unique (game_code, name)
 );
-CREATE TABLE IF NOT EXISTS "round" (
-	"number"	INTEGER NOT NULL,
-	"game_code"	TEXT NOT NULL,
-	"current"	INTEGER NOT NULL,
-	PRIMARY KEY("game_code","number"),
-	FOREIGN KEY("game_code") REFERENCES "game"("code") ON DELETE CASCADE
+
+create table round_drawing
+(
+    drawing      text not null,
+    round_number int  not null
+        constraint round_drawings_round_number_fk
+            references round (number)
+            on delete cascade,
+    game_code    text not null
+        references game
+            on delete cascade,
+    user_uuid    text not null
+        references user,
+    sequence     int,
+    constraint round_drawings_pk
+        unique (round_number, game_code, user_uuid)
 );
-COMMIT;
+
+create unique index unique_order
+    on round_drawing (game_code, sequence, round_number);
+
+create table round_prompt
+(
+    game_code     TEXT    not null
+        references game
+            on delete cascade,
+    round_number  INTEGER not null
+        references round (number)
+            on delete cascade,
+    user_uuid     TEXT    not null
+        references user
+            on delete restrict,
+    prompt_number INTEGER not null,
+    prompt        TEXT    not null,
+    primary key (game_code, round_number, user_uuid, prompt_number),
+    unique (game_code, round_number, prompt)
+);
+
+
