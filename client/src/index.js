@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import thunk from 'redux-thunk';
 import reduxWebsocket from '@giantmachines/redux-websocket';
 import { connect } from '@giantmachines/redux-websocket';
+import { composeWithDevTools } from 'redux-devtools-extension';
 
 import './index.css'
 import App from "./App"
@@ -32,7 +33,9 @@ const initialState = {
   currentPlayer: null,
   promptSubmissionNumber: 1,
   currentDrawing: null,
-  status: GAME_STATUS.NORMAL
+  status: GAME_STATUS.NORMAL,
+  drawingPrompts: [],
+  drawing: null,
 };
 
 function messageReducer(state, name, data) {
@@ -52,7 +55,9 @@ function messageReducer(state, name, data) {
         players: data.players,
         admin: data.admin,
         gameCode: data.gameCode,
-        currentPlayer: data.currentPlayer
+        currentPlayer: data.currentPlayer,
+        drawingPrompts: data.drawingPrompts,
+        drawing: data.drawing
       };
     }
     case "playerJoinedGame": {
@@ -85,6 +90,18 @@ function messageReducer(state, name, data) {
 
           return player
         })
+      }
+    }
+    case "setDrawingPrompts": {
+      return {
+        ...state,
+        drawingPrompts: data.prompts
+      }
+    }
+    case "setDrawing": {
+      return {
+        ...state,
+        drawing: data.drawing
       }
     }
     default:
@@ -136,10 +153,9 @@ const gameMiddleware = storeAPI => next => action => {
   return next(action);
 };
 
-const store = createStore(
-  reducer,
+const store = createStore(reducer, composeWithDevTools(
   applyMiddleware(thunk, reduxWebsocketMiddleware, gameMiddleware)
-);
+));
 
 
 store.dispatch(connect(WEBSOCKET_ADDRESS));

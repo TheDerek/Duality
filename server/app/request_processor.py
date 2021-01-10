@@ -176,14 +176,29 @@ async def submit_drawing(client: WebClient, request: dict):
     if store.has_submitted_drawing(code, player.id_):
         raise PromptError("User already submitted drawing for this round")
 
-    #store.add_round_drawing(code, player.id_, drawing)
+    store.set_player_drawing_image(code, player.id_, drawing)
 
     if store.all_drawings_submitted_for_round(code):
         # Prepare the prompt assignment phase
         game_logic.prepare_assign_prompts(store, code)
+
+        # Send the players the first drawing in the sequence
+        response = response_generator.current_drawing(code)
+        await asyncio.gather(
+            *[
+                dispatcher.add_to_message_queue(
+                    p.client,
+                    response
+                )
+                for p in store.get_players(code)
+            ]
+        )
+
         await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)
     else:
         # Otherwise just redirect the user to the waiting screen
+        await update_player(code, uuid)
+
         await dispatcher.add_to_message_queue(
             client,
             response_generator.generate_update_game_state(
@@ -196,15 +211,16 @@ async def update_player(code: str, uuid: str):
     """Update the given player for all clients in the current game"""
     # informing the players that this guy has finished his submissions
     players: List[Player] = store.get_players(code)
+    player_id: int = store.get_player_id(code, uuid)
     await asyncio.gather(
         *[
             dispatcher.add_to_message_queue(
-                player.client,
+                p.client,
                 response_generator.generate_update_player(
-                    code, player.id_, private_info=uuid == player.uuid
+                    code, player_id, private_info=player_id == p.id_
                 ),
             )
-            for player in players
+            for p in players
         ]
     )
 

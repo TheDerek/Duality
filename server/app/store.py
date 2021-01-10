@@ -400,7 +400,7 @@ class Store:
             "(SELECT COUNT(*)"
             " FROM drawing"
             " INNER JOIN round ON round.id = drawing.round_id"
-            " WHERE round.game_code = ?"
+            " WHERE round.game_code=? AND drawing.drawing IS NOT NULL"
             " AND round.current = TRUE) as finished"
         )
 
@@ -419,7 +419,8 @@ class Store:
             cursor.execute(
                 "SELECT 1 FROM drawing "
                 "INNER JOIN round on drawing.round_id = round.id "
-                "WHERE round.game_code=? AND drawing.player_id=? AND round.current = TRUE",
+                "WHERE round.game_code=? AND drawing.player_id=? "
+                "AND round.current = TRUE AND drawing.drawing IS NOT NULL",
                 (code, player_id),
             ).fetchone()
         )
@@ -444,6 +445,14 @@ class Store:
 
         self._db.commit()
 
+    def set_player_drawing_image(self, code: str, player_id: int, drawing: str):
+        round_id: int = self.get_current_round_id(code)
+        self._db.execute(
+            "UPDATE drawing SET drawing=? WHERE round_id=? AND player_id=?",
+            (drawing, round_id, player_id)
+        )
+        self._db.commit()
+
     def player_finished_submission(self, code: str, player_id: int) -> bool:
         game_state = self.get_game_state(code)
 
@@ -462,7 +471,7 @@ class Store:
 
         cursor = self._db.cursor()
         cursor.execute(
-            "SELECT id, player_id FROM drawing where round_id=?", (round_id,)
+            "SELECT id, player_id, sequence FROM drawing where round_id=?", (round_id,)
         )
         return [
             Drawing(row["id"], round_id, row["player_id"], row["sequence"], self._db)
@@ -486,6 +495,21 @@ class Store:
             ),
         )
         self._db.commit()
+
+    def get_current_drawing(self, game_code):
+        round_id: int = self.get_current_round_id(game_code)
+
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT drawing FROM drawing WHERE round_id=? AND sequence=?",
+            (round_id, 0)
+        )
+        record = cursor.fetchone()
+
+        if record:
+            return record["drawing"]
+        else:
+            return None
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()
