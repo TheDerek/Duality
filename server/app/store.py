@@ -21,7 +21,7 @@ class Player:
     game_code: str
     name: str
     admin: bool
-    client: Optional[WebClient]
+    client: WebClient
 
 
 class Drawing:
@@ -468,6 +468,14 @@ class Store:
             Drawing(row["id"], round_id, row["player_id"], row["sequence"], self._db)
             for row in cursor
         ]
+
+    def get_drawing_prompts_for_player(self, player_id):
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT prompt FROM prompt INNER JOIN drawing d on prompt.drawing_id = d.id WHERE d.player_id=?",
+            (player_id,)
+        )
+        return [row["prompt"] for row in cursor]
 
     def update_drawings_sequence(self, drawings: List[Drawing]):
         self._db.executemany(

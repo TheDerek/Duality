@@ -1,6 +1,6 @@
 from typing import List
 
-from app.store import Store, Player, GameState, Prompt
+from app.store import Store, Player, GameState, Prompt, Drawing
 
 
 class ResponseGenerator:
@@ -42,6 +42,15 @@ class ResponseGenerator:
             "updatePlayer": {
                 "player": self._generate_player(code, player_id, private_info),
                 "status": status,
+            }
+        }
+
+    def drawing_prompts(self, player_id: int):
+        # Get the players drawing
+        prompts: List[str] = self._store.get_drawing_prompts_for_player(player_id)
+        return {
+            "setDrawingPrompts": {
+                "prompts": prompts
             }
         }
 

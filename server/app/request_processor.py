@@ -124,8 +124,18 @@ async def submit_prompt(client: WebClient, request: dict):
     store.submit_prompt(code, player.id_, request["prompt"])
 
     if store.all_prompts_submitted_for_round(code):
-        # Update the game states state and inform clients
+        # Prepare the next stage of the game
         game_logic.prepare_draw_prompts(store, code)
+
+        # Send the players the data they need for the drawing stage
+        await asyncio.gather(
+            *[
+                dispatcher.add_to_message_queue(p.client, response_generator.drawing_prompts(p.id_))
+                for p in store.get_players(code)
+            ]
+        )
+
+        # Update the game states state and inform clients
         await change_state_and_inform(code, GameState.DRAW_PROMPTS)
         return
 
