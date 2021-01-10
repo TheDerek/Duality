@@ -166,7 +166,7 @@ async def submit_drawing(client: WebClient, request: dict):
     if store.has_submitted_drawing(code, player.id_):
         raise PromptError("User already submitted drawing for this round")
 
-    store.add_round_drawing(code, player.id_, drawing)
+    #store.add_round_drawing(code, player.id_, drawing)
 
     if store.all_drawings_submitted_for_round(code):
         # Prepare the prompt assignment phase

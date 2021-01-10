@@ -48,10 +48,9 @@ class Drawing:
 
 @dataclass()
 class Prompt:
-    id: int
-    game_code: int
-    round_number: int
-    user_uuid: str
+    id_: int
+    player_id: int
+    round_id: int
     prompt_number: int
     prompt: str
     drawing_id: Optional[int]
@@ -291,13 +290,13 @@ class Store:
         self._db.commit()
         return new_number
 
-    def get_prompts(self, code: str, player_id: Optional[int] = None) -> Set[str]:
+    def get_prompts(self, code: str, player_id: Optional[int] = None) -> List[Prompt]:
         """Get the prompts submitted for the current round of the given game code"""
         round_id: int = self.get_current_round_id(code)
 
         cursor: sqlite3.Cursor = self._db.cursor()
 
-        sql = "SELECT prompt FROM prompt where round_id=?"
+        sql = "SELECT prompt, prompt_number, id as id_, drawing_id, assigned_drawing_id, round_id, player_id FROM prompt where round_id=?"
         fields = [round_id]
 
         if player_id:
@@ -306,7 +305,7 @@ class Store:
 
         cursor.execute(sql, fields)
 
-        return set(record["prompt"] for record in cursor)
+        return [Prompt(**row) for row in cursor]
 
     def player_prompt_count(self, code: str, player_id: int) -> int:
         """
@@ -425,13 +424,24 @@ class Store:
             ).fetchone()
         )
 
-    def add_round_drawing(self, code: str, player_id: int, drawing: str):
-        round_id: int = self.get_current_round_id(code)
-
-        self._db.execute(
-            "INSERT INTO drawing (round_id, player_id, drawing) " "VALUES (?, ?, ?)",
-            (round_id, player_id, drawing),
+    def add_drawing(
+            self,
+            round_id: int,
+            player_id: int,
+            sequence: int,
+            prompt_1_id: int,
+            prompt_2_id: int
+    ):
+        cursor: sqlite3.Cursor = self._db.cursor()
+        cursor.execute(
+            "INSERT INTO drawing (round_id, player_id, sequence) " "VALUES (?, ?, ?)",
+            (round_id, player_id, sequence),
         )
+        drawing_id: int = cursor.lastrowid
+
+        for prompt_id in [prompt_1_id, prompt_2_id]:
+            self._db.execute("UPDATE prompt SET drawing_id=? WHERE id=?", (drawing_id, prompt_id))
+
         self._db.commit()
 
     def player_finished_submission(self, code: str, player_id: int) -> bool:

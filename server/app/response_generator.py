@@ -1,6 +1,6 @@
 from typing import List
 
-from app.store import Store, Player, GameState
+from app.store import Store, Player, GameState, Prompt
 
 
 class ResponseGenerator:
@@ -61,11 +61,11 @@ class ResponseGenerator:
         }
 
         if private_info:
-            prompts = self._store.get_prompts(game_code, player.id_)
+            prompts: List[Prompt] = self._store.get_prompts(game_code, player.id_)
 
             response["private"] = {
                 "currentPromptNumber": prompt_count + 1,
-                "prompts": list(prompts),
+                "prompts": [prompt.prompt for prompt in prompts],
             }
 
         return response
