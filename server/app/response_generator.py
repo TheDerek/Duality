@@ -7,66 +7,75 @@ class ResponseGenerator:
     def __init__(self, store: Store):
         self._store: Store = store
 
-    def generate_join_game(self, game_code: str, user_uuid: str) -> dict:
+    @staticmethod
+    def generate_update_game_state(state: GameState):
+        return {"updateGameState": {"gameState": state.name}}
+
+    def generate_join_game(self, game_code: str, player_id: int, uuid: str) -> dict:
         state: GameState = self._store.get_game_state(game_code)
 
-        if state != GameState.WAITING_ROOM and self._store.player_finished_submission(game_code, user_uuid):
+        if state != GameState.WAITING_ROOM and self._store.player_finished_submission(
+            game_code, player_id
+        ):
             state = GameState.WAITING_FOR_PLAYERS
 
         return {
             "joinGame": {
                 "gameCode": game_code,
-                "players": self._generate_players(game_code, user_uuid),
-                "admin": self._store.is_admin_of_game(user_uuid, game_code),
+                "players": self._generate_players(game_code, player_id),
+                "admin": self._store.is_admin_of_game(player_id, game_code),
                 "currentPlayer": self._generate_player(
-                    game_code, user_uuid, private_info=True
+                    game_code, player_id, private_info=True
                 ),
                 "gameState": state.name,
-                "uuid": user_uuid,
+                "uuid": uuid,
             }
         }
 
-    def generate_player_joined_game(self, uuid: str, code: str):
-        return {"playerJoinedGame": {"player": self._generate_player(code, uuid)}}
+    def generate_player_joined_game(self, player_id: int, code: str):
+        return {"playerJoinedGame": {"player": self._generate_player(code, player_id)}}
 
-    def generate_update_game_state(self, state: GameState):
-        return {"updateGameState": {"gameState": state.name}}
-
-    def generate_update_player(self, code: str, uuid: str, status=None, private_info: bool = False):
+    def generate_update_player(
+        self, code: str, player_id: int, status=None, private_info: bool = False
+    ):
         return {
             "updatePlayer": {
-                "player": self._generate_player(code, uuid, private_info),
-                "status": status
+                "player": self._generate_player(code, player_id, private_info),
+                "status": status,
             }
         }
 
     def _generate_player(
-        self, game_code: str, user_uuid: str, private_info=False
+        self, game_code: str, player_id: int, private_info=False
     ) -> dict:
-        player: Player = self._store.get_player(game_code, user_uuid)
-        prompt_count = self._store.player_prompt_count(game_code, user_uuid)
+        player: Player = self._store.get_player(player_id)
+        prompt_count = self._store.player_prompt_count(game_code, player_id)
 
         response = {
             "name": player.name,
             "admin": player.admin,
             "submissionFinished": self._store.player_finished_submission(
-                game_code, user_uuid
+                game_code, player_id
             ),
-            "currentPlayer": private_info
+            "currentPlayer": private_info,
         }
 
         if private_info:
-            prompts = self._store.get_prompts(game_code, user_uuid)
+            prompts = self._store.get_prompts(game_code, player.id_)
 
             response["private"] = {
-                "uuid": user_uuid,
                 "currentPromptNumber": prompt_count + 1,
-                "prompts": list(prompts)
+                "prompts": list(prompts),
             }
 
         return response
 
-    def _generate_players(self, game_code: str, uuid: str) -> list:
+    def _generate_players(self, game_code: str, player_id: int) -> list:
         players: List[Player] = self._store.get_players(game_code)
 
-        return [self._generate_player(game_code, player.uuid, private_info=uuid == player.uuid) for player in players]
+        return [
+            self._generate_player(
+                game_code, player.id_, private_info=player_id == player.id_
+            )
+            for player in players
+        ]

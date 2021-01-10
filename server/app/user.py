@@ -17,5 +17,5 @@ class User:
             "name": self.name,
             "admin": self.current_game.is_admin(self),
             "currentPlayer": current_player == self,
-            "uuid": self.uuid if include_uuid else None
+            "uuid": self.uuid if include_uuid else None,
         }

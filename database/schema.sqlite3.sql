@@ -13,8 +13,14 @@ create table round
         references game
             on delete cascade,
     current   INTEGER not null,
-    primary key (game_code, number)
+    id        INTEGER not null
+        constraint round_pk
+            primary key autoincrement,
+    unique (game_code, number)
 );
+
+create unique index round_id_uindex
+    on round (id);
 
 create table user
 (
@@ -22,30 +28,6 @@ create table user
         primary key
         unique
 );
-
-create table drawing
-(
-    drawing      text,
-    round_number int     not null
-        constraint round_drawings_round_number_fk
-            references round (number)
-            on delete cascade,
-    game_code    text    not null
-        references game
-            on delete cascade,
-    user_uuid    text    not null
-        references user,
-    sequence     int,
-    id           INTEGER not null
-        constraint drawing_pk
-            primary key autoincrement
-);
-
-create unique index drawing_id_uindex
-    on drawing (id);
-
-create unique index one_drawing_per_user_per_round
-    on drawing (round_number, game_code, user_uuid);
 
 create table player
 (
@@ -58,33 +40,55 @@ create table player
     client_hash INTEGER not null,
     admin       INTEGER default 0 not null,
     name        TEXT    not null,
-    primary key (game_code, user_uuid),
+    id          INTEGER not null
+        constraint player_pk
+            primary key autoincrement,
+    unique (game_code, user_uuid),
     unique (game_code, name)
 );
 
+create table drawing
+(
+    drawing   text,
+    sequence  int,
+    id        INTEGER not null
+        constraint drawing_pk
+            primary key autoincrement,
+    player_id int     not null
+        references player,
+    round_id  int     not null
+        references round
+);
+
+create unique index drawing_id_uindex
+    on drawing (id);
+
+create unique index player_id_uindex
+    on player (id);
+
 create table prompt
 (
-    game_code     TEXT    not null
-        references game
-            on delete cascade,
-    round_number  INTEGER not null
-        references round (number)
-            on delete cascade,
-    user_uuid     TEXT    not null
-        references user
-            on delete restrict,
-    prompt_number INTEGER not null,
-    prompt        TEXT    not null,
-    id            INTEGER not null
+    prompt_number       INTEGER not null,
+    prompt              TEXT    not null,
+    id                  INTEGER not null
         constraint prompt_pk
             primary key autoincrement,
-    drawing_id    int
+    drawing_id          int
         references drawing,
-    unique (game_code, round_number, user_uuid, prompt_number),
-    unique (game_code, round_number, prompt)
+    assigned_drawing_id int
+        references drawing,
+    round_id            int     not null
+        references round,
+    player_id           int     not null
+        references player
 );
 
 create unique index prompt_id_uindex
     on prompt (id);
+
+CREATE VIEW game_current_round as
+select game_code, id as round_id, number as round_number
+from round
+where current = true;
 
 

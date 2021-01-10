@@ -15,12 +15,7 @@ class RequestError(Exception):
         self._type: ErrorType = exception_type
 
     def get_error_response(self):
-        return {
-            "error": {
-                "type": self._type.name,
-                "userMessage": str(self)
-            }
-        }
+        return {"error": {"type": self._type.name, "userMessage": str(self)}}
 
 
 class PromptError(RequestError):

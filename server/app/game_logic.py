@@ -14,3 +14,8 @@ def prepare_assign_prompts(store: Store, game_code: str):
         drawing.sequence = index
 
     store.update_drawings_sequence(drawings)
+
+
+def prepare_draw_prompts(store: Store, game_code: str):
+    """Prepare the the drawing prompts phase"""
+    prompts = store.get_prompts(game_code)

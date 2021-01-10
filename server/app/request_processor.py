@@ -1,6 +1,6 @@
 import asyncio
 
-from typing import List
+from typing import List, Tuple
 
 from websockets.server import WebSocketServerProtocol
 
@@ -34,10 +34,10 @@ async def on_client_closed(web_client: WebClient):
 @dispatcher.request("createGame")
 async def on_create_game(client: WebClient, request: dict):
     uuid: str = store.get_or_create_user(client, request["uuid"])
-    game_code: str = store.create_game(client, uuid, request["playerName"])
+    game_code, player_id = store.create_game(client, uuid, request["playerName"])
 
     await dispatcher.add_to_message_queue(
-        client, response_generator.generate_join_game(game_code, uuid)
+        client, response_generator.generate_join_game(game_code, player_id, uuid)
     )
 
 
@@ -61,9 +61,11 @@ async def join_game(client: WebClient, request: dict):
         # Get the players in the game before the user joins
         old_players = store.get_players(code)
 
-        store.add_user_to_game(client, uuid, code, request["playerName"])
+        player: Player = store.add_user_to_game(
+            client, uuid, code, request["playerName"]
+        )
 
-        response = response_generator.generate_player_joined_game(uuid, code)
+        response = response_generator.generate_player_joined_game(player.id_, code)
         await asyncio.gather(
             *[
                 dispatcher.add_to_message_queue(player.client, response)
@@ -77,7 +79,10 @@ async def join_game(client: WebClient, request: dict):
 
     # Inform the user himself that he has joined the game
     await dispatcher.add_to_message_queue(
-        client, response_generator.generate_join_game(code, uuid)
+        client,
+        response_generator.generate_join_game(
+            code, store.get_player_id(code, uuid), uuid
+        ),
     )
 
 
@@ -89,7 +94,7 @@ async def start_game(client: WebClient, request: dict):
     if store.get_game_state(code) != GameState.WAITING_ROOM:
         raise WaitingRoomError("Game already started")
 
-    player: Player = store.get_player(code, uuid)
+    player: Player = store.get_player_from_game(code, uuid)
 
     if not player.admin:
         raise WaitingRoomError("Not in a game to start")
@@ -114,22 +119,27 @@ async def submit_prompt(client: WebClient, request: dict):
     if store.get_game_state(code) != GameState.SUBMIT_ATTRIBUTES:
         raise PromptError("Incorrect game state")
 
-    store.submit_prompt(code, uuid, request["prompt"])
+    player: Player = store.get_player_from_game(code, uuid)
+
+    store.submit_prompt(code, player.id_, request["prompt"])
 
     if store.all_prompts_submitted_for_round(code):
         # Update the game states state and inform clients
+        game_logic.prepare_draw_prompts(store, code)
         await change_state_and_inform(code, GameState.DRAW_PROMPTS)
         return
 
     # Inform the players that someone has finished the submission
-    if store.player_finished_prompt_submission(code, uuid):
+    if store.player_finished_prompt_submission(code, player.id_):
         # informing the players that this guy has finished his submissions
         await update_player(code, uuid)
 
         # Yeet the player into the waiting for players state
         await dispatcher.add_to_message_queue(
             client,
-            response_generator.generate_update_game_state(GameState.WAITING_FOR_PLAYERS)
+            response_generator.generate_update_game_state(
+                GameState.WAITING_FOR_PLAYERS
+            ),
         )
         return
 
@@ -137,7 +147,7 @@ async def submit_prompt(client: WebClient, request: dict):
     await dispatcher.add_to_message_queue(
         client,
         response_generator.generate_update_player(
-            code, uuid, private_info=True, status="NORMAL"
+            code, player.id_, private_info=True, status="NORMAL"
         ),
     )
 
@@ -146,16 +156,17 @@ async def submit_prompt(client: WebClient, request: dict):
 async def submit_drawing(client: WebClient, request: dict):
     code: str = request["gameCode"]
     drawing: str = request["drawing"]
-
     uuid: str = store.get_uuid(client)
 
     if store.get_game_state(code) != GameState.DRAW_PROMPTS:
         raise PromptError("Incorrect game state")
 
-    if store.has_submitted_drawing(code, uuid):
+    player: Player = store.get_player_from_game(code, uuid)
+
+    if store.has_submitted_drawing(code, player.id_):
         raise PromptError("User already submitted drawing for this round")
 
-    store.add_round_drawing(code, uuid, drawing)
+    store.add_round_drawing(code, player.id_, drawing)
 
     if store.all_drawings_submitted_for_round(code):
         # Prepare the prompt assignment phase
@@ -165,7 +176,9 @@ async def submit_drawing(client: WebClient, request: dict):
         # Otherwise just redirect the user to the waiting screen
         await dispatcher.add_to_message_queue(
             client,
-            response_generator.generate_update_game_state(GameState.WAITING_FOR_PLAYERS)
+            response_generator.generate_update_game_state(
+                GameState.WAITING_FOR_PLAYERS
+            ),
         )
 
 
@@ -178,9 +191,7 @@ async def update_player(code: str, uuid: str):
             dispatcher.add_to_message_queue(
                 player.client,
                 response_generator.generate_update_player(
-                    code,
-                    uuid,
-                    private_info=uuid == player.uuid
+                    code, player.id_, private_info=uuid == player.uuid
                 ),
             )
             for player in players
@@ -199,9 +210,7 @@ async def change_state_and_inform(game_code: str, new_state: GameState):
     store.update_game_state(game_code, new_state)
 
     # Get the connected clients for this game
-    response = response_generator.generate_update_game_state(
-        new_state
-    )
+    response = response_generator.generate_update_game_state(new_state)
 
     await asyncio.gather(
         *[
