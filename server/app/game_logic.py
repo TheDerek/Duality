@@ -35,7 +35,8 @@ def prepare_draw_prompts(store: Store, game_code: str):
             player.id_,
             index,
             drawing_prompts[0].id_,
-            drawing_prompts[1].id_
+            drawing_prompts[1].id_,
+            index == 0
         )
 
 

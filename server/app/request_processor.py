@@ -207,6 +207,33 @@ async def submit_drawing(client: WebClient, request: dict):
         )
 
 
+@dispatcher.request("assignPrompt")
+async def assign_prompt(client: WebClient, request: dict):
+    code: str = request["gameCode"]
+    prompt: str = request["prompt"]
+    uuid: str = store.get_uuid(client)
+    player: Player = store.get_player_from_game(code, uuid)
+
+    if store.get_game_state(code) != GameState.ASSIGN_PROMPTS:
+        raise PromptError("Incorrect game state")
+
+    store.assign_prompt_to_current_image(code, player.id_, prompt)
+
+    # Move players to the next state if the prompts have been submitted
+    if store.prompts_assigned_for_current_round(code):
+        return
+
+    # Otherwise move this player to the waiting room and inform the others
+    # he is finished
+    await update_player(code, uuid)
+    await dispatcher.add_to_message_queue(
+        client,
+        response_generator.generate_update_game_state(
+            GameState.WAITING_FOR_PLAYERS
+        ),
+    )
+
+
 async def update_player(code: str, uuid: str):
     """Update the given player for all clients in the current game"""
     # informing the players that this guy has finished his submissions

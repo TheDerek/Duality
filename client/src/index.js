@@ -10,7 +10,7 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 import './index.css'
 import App from "./App"
 import { GAME_STATES } from "./App";
-import { GAME_STATUS, REPORT_STATUS } from "./actions";
+import {DISABLE_INPUT, GAME_STATUS, REPORT_STATUS} from "./actions";
 
 export const LOCAL_STORAGE_PLAYER_NAME = "playerNameValue";
 export const LOCAL_STORAGE_GAME_CODE = "gameCodeValue";
@@ -36,6 +36,7 @@ const initialState = {
   status: GAME_STATUS.NORMAL,
   drawingPrompts: [],
   drawing: null,
+  inputDisabled: false
 };
 
 function messageReducer(state, name, data) {
@@ -126,6 +127,11 @@ function reducer(state = initialState, action) {
         status: action.status,
         errors: action.errors
       };
+    case DISABLE_INPUT:
+      return {
+        ...state,
+        inputDisabled: true
+      }
     default:
       return state;
   }

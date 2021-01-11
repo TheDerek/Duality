@@ -40,7 +40,7 @@ async def consumer_handler(websocket, path):
             print(f"ERROR: No handler for {name} request")
             continue
 
-        print("Received request: ", name)
+        print("Received request: ", request)
 
         try:
             await request_dispatcher.requests[name](websocket, data)

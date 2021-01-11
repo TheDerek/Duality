@@ -30,7 +30,7 @@ class ResponseGenerator:
                 "gameState": state.name,
                 "uuid": uuid,
                 "drawingPrompts": self._store.get_drawing_prompts_for_player(player_id),
-                "drawing": self._store.get_current_drawing(game_code)
+                "drawing": self._store.get_current_drawing_image(game_code)
             }
         }
 
@@ -57,7 +57,7 @@ class ResponseGenerator:
         }
 
     def current_drawing(self, game_code):
-        drawing: str = self._store.get_current_drawing(game_code)
+        drawing: str = self._store.get_current_drawing(game_code).drawing
         return {
             "setDrawing": {
                 "drawing": drawing

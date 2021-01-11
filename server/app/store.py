@@ -27,22 +27,24 @@ class Player:
 class Drawing:
     def __init__(
         self,
-        drawing_id: int,
+        id_: int,
         round_id: int,
         player_id: int,
         sequence: int,
+        current: bool,
         client: sqlite3.Connection,
     ):
-        self.drawing_id: int = drawing_id
+        self.id_: int = id_
         self.round_id: int = round_id
         self.player_id: int = player_id
         self.sequence: int = sequence
+        self.current: bool = current
         self._db: sqlite3.Connection = client
 
     @property
     def drawing(self):
         cursor = self._db.cursor()
-        cursor.execute("SELECT drawing from drawing WHERE id=?", (self.drawing_id,))
+        cursor.execute("SELECT drawing from drawing WHERE id=?", (self.id_,))
         return cursor.fetchone()["drawing"]
 
 
@@ -296,7 +298,8 @@ class Store:
 
         cursor: sqlite3.Cursor = self._db.cursor()
 
-        sql = "SELECT prompt, prompt_number, id as id_, drawing_id, assigned_drawing_id, round_id, player_id FROM prompt where round_id=?"
+        sql = "SELECT prompt, prompt_number, id as id_, drawing_id, assigned_drawing_id, round_id, player_id " \
+              "FROM prompt where round_id=?"
         fields = [round_id]
 
         if player_id:
@@ -431,12 +434,13 @@ class Store:
             player_id: int,
             sequence: int,
             prompt_1_id: int,
-            prompt_2_id: int
+            prompt_2_id: int,
+            current: bool
     ):
         cursor: sqlite3.Cursor = self._db.cursor()
         cursor.execute(
-            "INSERT INTO drawing (round_id, player_id, sequence) " "VALUES (?, ?, ?)",
-            (round_id, player_id, sequence),
+            "INSERT INTO drawing (round_id, player_id, sequence, current) " "VALUES (?, ?, ?, ?)",
+            (round_id, player_id, sequence, current),
         )
         drawing_id: int = cursor.lastrowid
 
@@ -462,6 +466,9 @@ class Store:
         if game_state == GameState.DRAW_PROMPTS:
             return self.has_submitted_drawing(code, player_id)
 
+        if game_state == GameState.ASSIGN_PROMPTS:
+            return self.player_finished_assigning_prompts(code, player_id)
+
         # We don't really care that much about the value otherwise but return False for
         # consistency
         return False
@@ -471,10 +478,10 @@ class Store:
 
         cursor = self._db.cursor()
         cursor.execute(
-            "SELECT id, player_id, sequence FROM drawing where round_id=?", (round_id,)
+            "SELECT id, player_id, sequence, current FROM drawing where round_id=?", (round_id,)
         )
         return [
-            Drawing(row["id"], round_id, row["player_id"], row["sequence"], self._db)
+            Drawing(row["id"], round_id, row["player_id"], row["sequence"], row["current"], self._db)
             for row in cursor
         ]
 
@@ -488,28 +495,95 @@ class Store:
 
     def update_drawings_sequence(self, drawings: List[Drawing]):
         self._db.executemany(
-            "UPDATE drawing SET sequence=? WHERE round_id=? AND player_id=?",
+            "UPDATE drawing SET sequence=? AND current=? WHERE round_id=? AND player_id=?",
             (
-                (drawing.sequence, drawing.round_id, drawing.player_id)
+                (drawing.sequence, drawing.current, drawing.round_id, drawing.player_id)
                 for drawing in drawings
             ),
         )
         self._db.commit()
 
-    def get_current_drawing(self, game_code):
+    def get_current_drawing(self, game_code) -> Optional[Drawing]:
         round_id: int = self.get_current_round_id(game_code)
 
         cursor = self._db.cursor()
         cursor.execute(
-            "SELECT drawing FROM drawing WHERE round_id=? AND sequence=?",
-            (round_id, 0)
+            "SELECT id, player_id, sequence, current FROM drawing where round_id=? and current=TRUE",
+            (round_id,)
         )
-        record = cursor.fetchone()
-
-        if record:
-            return record["drawing"]
+        row = cursor.fetchone()
+        if row:
+            return Drawing(row["id"], round_id, row["player_id"], row["sequence"], row["current"], self._db)
         else:
             return None
+
+    def get_current_drawing_image(self, game_code):
+        drawing: Drawing = self.get_current_drawing(game_code)
+
+        if drawing:
+            return drawing.drawing
+        else:
+            return None
+
+    def player_finished_assigning_prompts(self, game_code, player_id):
+        drawing: Drawing = self.get_current_drawing(game_code)
+
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT 1 FROM assigned_prompts WHERE player_id=? AND drawing_id=?",
+            (player_id, drawing.id_)
+        )
+        return bool(cursor.fetchone())
+
+    def player_has_prompt_for_current_round(self, player_id, prompt):
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT 1 FROM player, round, prompt "
+            "WHERE player.id=? AND round.game_code=player.game_code AND round.current=TRUE "
+            "AND prompt.round_id=round.id AND prompt.prompt=?",
+            (player_id, prompt)
+        )
+        return bool(cursor.fetchone())
+
+    def assign_prompt_to_current_image(self, game_code: str, player_id: int, prompt: str):
+        if self.player_finished_submission(game_code, player_id):
+            raise PromptError("Player has already assigned a prompt for this drawing")
+
+        if prompt and not self.player_has_prompt_for_current_round(player_id, prompt):
+            raise PromptError("Player does not have this prompt")
+
+        if prompt:
+            self._db.execute(
+                "INSERT INTO assigned_prompts (drawing_id, prompt_id, player_id) "
+                "SELECT drawing.id, prompt.id, player.id "
+                "FROM player, round, drawing, prompt "
+                "WHERE player.id=? AND round.game_code=player.game_code AND round.current=TRUE "
+                "AND drawing.round_id=round.id AND drawing.current=TRUE AND prompt.round_id=round.id "
+                "AND prompt.prompt=?",
+                (player_id, prompt)
+            )
+        else:
+            self._db.execute(
+                "INSERT INTO assigned_prompts (drawing_id, prompt_id, player_id) "
+                "SELECT drawing.id, NULL, player.id "
+                "FROM player, round, drawing "
+                "WHERE player.id=? AND round.game_code=player.game_code AND round.current=TRUE "
+                "AND drawing.round_id=round.id AND drawing.current=TRUE",
+                (player_id,)
+            )
+
+        self._db.commit()
+
+    def prompts_assigned_for_current_round(self, game_code):
+        cursor: sqlite3.Cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT (SELECT COUNT(1) FROM round, drawing, assigned_prompts "
+            "WHERE round.game_code=? AND round.current=TRUE AND drawing.round_id=round.id "
+            "AND assigned_prompts.drawing_id=drawing.id) "
+            "= (SELECT COUNT(1) from player WHERE game_code=?) as finished",
+            (game_code, game_code)
+        )
+        return cursor.fetchone()["finished"]
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

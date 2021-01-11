@@ -2,7 +2,7 @@ import { send } from '@giantmachines/redux-websocket';
 
 export const REPORT_STATUS = "REPORT_STATUS";
 export const SET_UUID = "SET_UUID";
-export const SET_SUBMITTING = "SET_SUBMITTING";
+export const DISABLE_INPUT = "DISABLE_INPUT";
 
 export const GAME_STATUS = {
   NORMAL: "NORMAL",
@@ -83,5 +83,23 @@ export function submitPrompt(gameCode, prompt) {
         prompt: prompt
       }
     }));
+  }
+}
+
+export function assignPrompt(prompt) {
+  return (dispatch, getState) => {
+    dispatch(disableInput());
+    dispatch(send({
+      assignPrompt: {
+        gameCode: getState().gameCode,
+        prompt: prompt
+      }
+    }));
+  }
+}
+
+export function disableInput() {
+  return {
+    type: DISABLE_INPUT
   }
 }
