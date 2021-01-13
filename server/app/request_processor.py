@@ -130,7 +130,9 @@ async def submit_prompt(client: WebClient, request: dict):
         # Send the players the data they need for the drawing stage
         await asyncio.gather(
             *[
-                dispatcher.add_to_message_queue(p.client, response_generator.drawing_prompts(p.id_))
+                dispatcher.add_to_message_queue(
+                    p.client, response_generator.drawing_prompts(p.id_)
+                )
                 for p in store.get_players(code)
             ]
         )
@@ -186,10 +188,7 @@ async def submit_drawing(client: WebClient, request: dict):
         response = response_generator.current_drawing(code)
         await asyncio.gather(
             *[
-                dispatcher.add_to_message_queue(
-                    p.client,
-                    response
-                )
+                dispatcher.add_to_message_queue(p.client, response)
                 for p in store.get_players(code)
             ]
         )
@@ -221,6 +220,9 @@ async def assign_prompt(client: WebClient, request: dict):
 
     # Move players to the next state if the prompts have been submitted
     if store.prompts_assigned_for_current_round(code):
+        response = response_generator.assigned_prompts(code)
+        await send_response_to_players(response, store.get_players(code))
+        await change_state_and_inform(code, GameState.DISPLAY_RESULTS)
         return
 
     # Otherwise move this player to the waiting room and inform the others
@@ -228,9 +230,7 @@ async def assign_prompt(client: WebClient, request: dict):
     await update_player(code, uuid)
     await dispatcher.add_to_message_queue(
         client,
-        response_generator.generate_update_game_state(
-            GameState.WAITING_FOR_PLAYERS
-        ),
+        response_generator.generate_update_game_state(GameState.WAITING_FOR_PLAYERS),
     )
 
 
@@ -269,5 +269,14 @@ async def change_state_and_inform(game_code: str, new_state: GameState):
         *[
             dispatcher.add_to_message_queue(client, response)
             for client in store.get_clients_for_game(game_code)
+        ]
+    )
+
+
+async def send_response_to_players(response: dict, players: List[Player]):
+    await asyncio.gather(
+        *[
+            dispatcher.add_to_message_queue(player.client, response)
+            for player in players
         ]
     )

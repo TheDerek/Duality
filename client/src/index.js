@@ -37,7 +37,8 @@ function getInitialState() {
     status: GAME_STATUS.NORMAL,
     drawingPrompts: [],
     drawing: null,
-    inputDisabled: false
+    inputDisabled: false,
+    assignedPrompts: []
   }
 }
 
@@ -60,7 +61,8 @@ function messageReducer(state, name, data) {
         gameCode: data.gameCode,
         currentPlayer: data.currentPlayer,
         drawingPrompts: data.drawingPrompts,
-        drawing: data.drawing
+        drawing: data.drawing,
+        assignedPrompts: data.assignedPrompts
       };
     }
     case "playerJoinedGame": {
@@ -105,6 +107,12 @@ function messageReducer(state, name, data) {
       return {
         ...state,
         drawing: data.drawing
+      }
+    }
+    case "setAssignedPrompts": {
+      return {
+        ...state,
+        assignedPrompts: data.prompts
       }
     }
     default:

@@ -1,6 +1,6 @@
 from typing import List
 
-from app.store import Store, Player, GameState, Prompt, Drawing
+from app.store import Store, Player, GameState, Prompt, Drawing, AssignedPrompt
 
 
 class ResponseGenerator:
@@ -30,7 +30,10 @@ class ResponseGenerator:
                 "gameState": state.name,
                 "uuid": uuid,
                 "drawingPrompts": self._store.get_drawing_prompts_for_player(player_id),
-                "drawing": self._store.get_current_drawing_image(game_code)
+                "drawing": self._store.get_current_drawing_image(game_code),
+                "assignedPrompts": self._generate_assigned_prompts(
+                    self._store.get_assigned_prompts(game_code)
+                ),
             }
         }
 
@@ -50,19 +53,36 @@ class ResponseGenerator:
     def drawing_prompts(self, player_id: int):
         # Get the players drawing
         prompts: List[str] = self._store.get_drawing_prompts_for_player(player_id)
-        return {
-            "setDrawingPrompts": {
-                "prompts": prompts
-            }
-        }
+        return {"setDrawingPrompts": {"prompts": prompts}}
 
     def current_drawing(self, game_code):
         drawing: str = self._store.get_current_drawing(game_code).drawing
+        return {"setDrawing": {"drawing": drawing}}
+
+    def assigned_prompts(self, game_code: str):
+        prompts: List[AssignedPrompt] = self._store.get_assigned_prompts(game_code)
         return {
-            "setDrawing": {
-                "drawing": drawing
+            "setAssignedPrompts": {
+                "prompts": [
+                    {
+                        "player_name": prompt.player_name,
+                        "prompt": prompt.prompt,
+                        "correct": prompt.correct,
+                    }
+                    for prompt in prompts
+                ]
             }
         }
+
+    def _generate_assigned_prompts(self, prompts: List[AssignedPrompt]):
+        return [
+            {
+                "player_name": prompt.player_name,
+                "prompt": prompt.prompt,
+                "correct": prompt.correct,
+            }
+            for prompt in prompts
+        ]
 
     def _generate_player(
         self, game_code: str, player_id: int, private_info=False

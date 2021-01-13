@@ -36,7 +36,7 @@ def prepare_draw_prompts(store: Store, game_code: str):
             index,
             drawing_prompts[0].id_,
             drawing_prompts[1].id_,
-            index == 0
+            index == 0,
         )
 
 
@@ -45,7 +45,9 @@ def get_drawing_prompts(player: Player, prompts: List[Prompt]) -> List[Prompt]:
     drawing_prompts_player_ids = set()
     prompts_copy = list(prompts)
     for prompt in prompts_copy:
-        if (prompt.player_id != player.id_) and (prompt.player_id not in drawing_prompts_player_ids):
+        if (prompt.player_id != player.id_) and (
+            prompt.player_id not in drawing_prompts_player_ids
+        ):
             drawing_prompts_player_ids.add(prompt.player_id)
             drawing_prompts.append(prompt)
             prompts.remove(prompt)

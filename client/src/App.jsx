@@ -7,6 +7,7 @@ import SubmitPrompts from "./SubmitPrompts";
 import DrawPrompts from "./DrawPrompts";
 import WaitingForPlayers from "./WaitingForPlayers";
 import AssignPrompts from "./AssignPrompts";
+import DisplayResults from "./DisplayResults";
 
 export const GAME_STATES = {
   LOBBY: "LOBBY",
@@ -14,7 +15,8 @@ export const GAME_STATES = {
   SUBMIT_PROMPTS: "SUBMIT_PROMPTS",
   DRAW_PROMPTS: "DRAW_PROMPTS",
   WAITING_FOR_PLAYERS: "WAITING_FOR_PLAYERS",
-  ASSIGN_PROMPTS: "ASSIGN_PROMPTS"
+  ASSIGN_PROMPTS: "ASSIGN_PROMPTS",
+  DISPLAY_RESULTS: "DISPLAY_RESULTS"
 };
 
 class App extends React.Component {
@@ -25,6 +27,7 @@ class App extends React.Component {
     [GAME_STATES.DRAW_PROMPTS]: <DrawPrompts/>,
     [GAME_STATES.WAITING_FOR_PLAYERS]: <WaitingForPlayers/>,
     [GAME_STATES.ASSIGN_PROMPTS]: <AssignPrompts/>,
+    [GAME_STATES.DISPLAY_RESULTS]: <DisplayResults/>
   };
 
   getGameState() {
