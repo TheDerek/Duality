@@ -2,9 +2,9 @@ import React from "react";
 import {connect} from "react-redux";
 import {useSpring, useChain, animated} from 'react-spring'
 
-const FIRST_WAIT = 2000;
-const NEXT_WAIT = 2000;
-const CORRECT_DELAY = 1000;
+const FIRST_WAIT = 3500;
+const NEXT_WAIT = 5000;
+const CORRECT_DELAY = 3000;
 
 function CorrectText(props) {
   if (props.correct) {
@@ -16,9 +16,7 @@ function CorrectText(props) {
 
 function Prompt(props) {
   console.log(props.prompt);
-  let classes = "card mb-2 bg-light ";
-  classes += " text-white"
-  classes += props.prompt.correct ? "bg-success " : "bg-danger ";
+  let classes = "card mb-2";
 
   const animation = useSpring({
     from: {
@@ -74,7 +72,8 @@ function Drawing(props) {
     to: {
       opacity: 1,
       transform: 'translate3d(0px,0px,0px)'
-    }
+    },
+    delay: 500,
   });
 
   return (
