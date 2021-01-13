@@ -61,7 +61,7 @@ class Prompt:
 
 class GameState(Enum):
     WAITING_ROOM = auto()
-    SUBMIT_ATTRIBUTES = auto()
+    SUBMIT_PROMPTS = auto()
     DRAW_PROMPTS = auto()
     WAITING_FOR_PLAYERS = auto()
     ASSIGN_PROMPTS = auto()
@@ -460,7 +460,7 @@ class Store:
     def player_finished_submission(self, code: str, player_id: int) -> bool:
         game_state = self.get_game_state(code)
 
-        if game_state == GameState.SUBMIT_ATTRIBUTES:
+        if game_state == GameState.SUBMIT_PROMPTS:
             return self.player_finished_prompt_submission(code, player_id)
 
         if game_state == GameState.DRAW_PROMPTS:

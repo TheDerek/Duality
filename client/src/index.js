@@ -18,26 +18,28 @@ export const LOCAL_STORAGE_UUID = "uuid";
 
 const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
 
-const initialState = {
-  uuid: localStorage.getItem(LOCAL_STORAGE_UUID),
-  minimumPlayers: 3,
-  gameState: GAME_STATES.LOBBY,
-  presetLobbyFormValues: {
-    name: localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME) || "",
-    gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE) || ""
-  },
-  players: [],
-  errors: [],
-  gameCode: "",
-  admin: false,
-  currentPlayer: null,
-  promptSubmissionNumber: 1,
-  currentDrawing: null,
-  status: GAME_STATUS.NORMAL,
-  drawingPrompts: [],
-  drawing: null,
-  inputDisabled: false
-};
+function getInitialState() {
+  return {
+    uuid: localStorage.getItem(LOCAL_STORAGE_UUID),
+    minimumPlayers: 3,
+    gameState: GAME_STATES.LOBBY,
+    presetLobbyFormValues: {
+      name: localStorage.getItem(LOCAL_STORAGE_PLAYER_NAME) || "",
+      gameCode: localStorage.getItem(LOCAL_STORAGE_GAME_CODE) || ""
+    },
+    players: [],
+    errors: [],
+    gameCode: "",
+    admin: false,
+    currentPlayer: null,
+    promptSubmissionNumber: 1,
+    currentDrawing: null,
+    status: GAME_STATUS.NORMAL,
+    drawingPrompts: [],
+    drawing: null,
+    inputDisabled: false
+  }
+}
 
 function messageReducer(state, name, data) {
   switch(name) {
@@ -110,10 +112,21 @@ function messageReducer(state, name, data) {
   }
 }
 
-function reducer(state = initialState, action) {
+function reducer(state = getInitialState(), action) {
   console.log('reducer', state, action);
 
   switch(action.type) {
+    case 'REDUX_WEBSOCKET::CLOSED':
+    case 'REDUX_WEBSOCKET::BROKEN':
+      if (state.gameState === GAME_STATES.LOBBY) {
+        return state;
+      } else {
+        console.log("Lost connection, returning to lobby..")
+        return {
+          ...getInitialState(),
+          errors: ["Lost connection to server, please rejoin"]
+        };
+      }
     case 'REDUX_WEBSOCKET::MESSAGE':
       const data = JSON.parse(action.payload.message);
       const name = Object.keys(data)[0];

@@ -11,7 +11,7 @@ import AssignPrompts from "./AssignPrompts";
 export const GAME_STATES = {
   LOBBY: "LOBBY",
   WAITING_ROOM: "WAITING_ROOM",
-  SUBMIT_ATTRIBUTES: "SUBMIT_ATTRIBUTES",
+  SUBMIT_PROMPTS: "SUBMIT_PROMPTS",
   DRAW_PROMPTS: "DRAW_PROMPTS",
   WAITING_FOR_PLAYERS: "WAITING_FOR_PLAYERS",
   ASSIGN_PROMPTS: "ASSIGN_PROMPTS"
@@ -21,7 +21,7 @@ class App extends React.Component {
   #gameStates = {
     [GAME_STATES.LOBBY]: <Lobby/>,
     [GAME_STATES.WAITING_ROOM]: <WaitingRoom/>,
-    [GAME_STATES.SUBMIT_ATTRIBUTES]: <SubmitPrompts/>,
+    [GAME_STATES.SUBMIT_PROMPTS]: <SubmitPrompts/>,
     [GAME_STATES.DRAW_PROMPTS]: <DrawPrompts/>,
     [GAME_STATES.WAITING_FOR_PLAYERS]: <WaitingForPlayers/>,
     [GAME_STATES.ASSIGN_PROMPTS]: <AssignPrompts/>,

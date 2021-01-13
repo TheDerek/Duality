@@ -108,7 +108,7 @@ async def start_game(client: WebClient, request: dict):
     store.create_next_round(code)
 
     # Update the game states state and inform clients
-    await change_state_and_inform(code, GameState.SUBMIT_ATTRIBUTES)
+    await change_state_and_inform(code, GameState.SUBMIT_PROMPTS)
 
 
 @dispatcher.request("submitPrompt")
@@ -116,7 +116,7 @@ async def submit_prompt(client: WebClient, request: dict):
     code: str = request["gameCode"]
     uuid: str = store.get_uuid(client)
 
-    if store.get_game_state(code) != GameState.SUBMIT_ATTRIBUTES:
+    if store.get_game_state(code) != GameState.SUBMIT_PROMPTS:
         raise PromptError("Incorrect game state")
 
     player: Player = store.get_player_from_game(code, uuid)

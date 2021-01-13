@@ -132,7 +132,7 @@ class Lobby extends React.Component {
 
   render() {
     let errorDisplay = null;
-    if (this.props.status === GAME_STATUS.ERRORED) {
+    if (this.props.errors) {
       errorDisplay = <Errors errors={this.props.errors}/>;
     }
 
