@@ -234,6 +234,11 @@ async def assign_prompt(client: WebClient, request: dict):
     )
 
 
+@dispatcher.request("finishResults")
+async def finish_prompts(client: WebClient, request: dict):
+    pass
+
+
 async def update_player(code: str, uuid: str):
     """Update the given player for all clients in the current game"""
     # informing the players that this guy has finished his submissions

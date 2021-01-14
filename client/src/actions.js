@@ -98,6 +98,16 @@ export function assignPrompt(prompt) {
   }
 }
 
+export function finishResults(prompt) {
+  return (dispatch) => {
+    dispatch(disableInput());
+    dispatch(send({
+      finishResults: {
+      }
+    }));
+  }
+}
+
 export function disableInput() {
   return {
     type: DISABLE_INPUT

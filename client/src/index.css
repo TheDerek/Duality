@@ -10,3 +10,8 @@
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
 }
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}

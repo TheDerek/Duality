@@ -73,6 +73,7 @@ class GameState(Enum):
     WAITING_FOR_PLAYERS = auto()
     ASSIGN_PROMPTS = auto()
     DISPLAY_RESULTS = auto()
+    DISPLAY_SCORES = auto()
 
 
 class Store:
