@@ -60,6 +60,9 @@ class ResponseGenerator:
         return {"setDrawing": {"drawing": drawing}}
 
     def assigned_prompts(self, game_code: str):
+        """Return a list of prompts assigned for the current drawing for the current
+        round"""
+
         prompts: List[AssignedPrompt] = self._store.get_assigned_prompts(game_code)
         return {
             "setAssignedPrompts": {
@@ -104,7 +107,7 @@ class ResponseGenerator:
 
             response["private"] = {
                 "currentPromptNumber": prompt_count + 1,
-                "prompts": [prompt.prompt for prompt in prompts],
+                "prompts": [{"prompt": prompt.prompt, "enabled": prompt.enabled} for prompt in prompts],
             }
 
         return response

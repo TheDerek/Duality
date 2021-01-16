@@ -99,10 +99,11 @@ export function assignPrompt(prompt) {
 }
 
 export function finishResults(prompt) {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch(disableInput());
     dispatch(send({
       finishResults: {
+        gameCode: getState().gameCode,
       }
     }));
   }

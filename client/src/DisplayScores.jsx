@@ -40,7 +40,6 @@ class DisplayScores extends React.Component {
         <h3 className="text-center">Results for round 1</h3>
         <div className="row">
           <div className="col-sm">
-            <Drawing drawing={this.props.drawing}/>
           </div>
           <div className="col-sm">
             { continueButton }
@@ -62,4 +61,4 @@ const mapDispatchToProps = {
   finishResults,
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(DisplayResults);
+export default connect(mapStateToProps, mapDispatchToProps)(DisplayScores);

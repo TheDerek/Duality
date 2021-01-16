@@ -57,6 +57,7 @@ class Prompt:
     prompt: str
     drawing_id: Optional[int]
     assigned_drawing_id: Optional[int]
+    enabled: bool
 
 
 @dataclass()
@@ -308,7 +309,8 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
 
         sql = (
-            "SELECT prompt, prompt_number, id as id_, drawing_id, assigned_drawing_id, round_id, player_id "
+            "SELECT prompt, prompt_number, id as id_, drawing_id, assigned_drawing_id, round_id, player_id, "
+            "NOT EXISTS(SELECT 1 FROM assigned_prompt WHERE assigned_prompt.prompt_id=prompt.id) as enabled "
             "FROM prompt where round_id=?"
         )
         fields = [round_id]
@@ -609,7 +611,7 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
         cursor.execute(
             "SELECT (SELECT COUNT(1) FROM round, drawing, assigned_prompt "
-            "WHERE round.game_code=? AND round.current=TRUE AND drawing.round_id=round.id "
+            "WHERE round.game_code=? AND round.current=TRUE AND drawing.round_id=round.id AND drawing.current = TRUE "
             "AND assigned_prompt.drawing_id=drawing.id) "
             "= (SELECT COUNT(1) from player WHERE game_code=?) as finished",
             (game_code, game_code),
@@ -636,11 +638,74 @@ class Store:
                   prompt.player_id=player.id AND
                   drawing.round_id=round.id AND
                   drawing.current=TRUE AND
-                  assigned_prompt.prompt_id = prompt.id
+                  assigned_prompt.prompt_id = prompt.id AND
+                  assigned_prompt.drawing_id=drawing.id
             """,
             (game_code,),
         )
         return [AssignedPrompt(**row) for row in cursor]
+
+    def next_drawing(self, game_code):
+        """Update the database to set the next drawing in the sequence as the current drawing"""
+        drawing: Drawing = self.get_current_drawing(game_code)
+
+        # Remove current from the current drawing
+        self._db.execute(
+            """
+            UPDATE drawing
+            SET current=0
+            WHERE round_id = (
+                SELECT round_id
+                FROM round
+                WHERE round.game_code = ?
+                  AND round.current = TRUE
+            )
+              AND drawing.current = 1
+            """,
+            (game_code,)
+        )
+
+        # Set the next drawing in line as the current drawing
+        self._db.execute(
+            """
+            UPDATE drawing
+            SET current=1
+            WHERE round_id = (
+                SELECT round_id
+                FROM round
+                WHERE round.game_code = ?
+                  AND round.current = TRUE
+            )
+              AND drawing.sequence = ? + 1
+            """,
+            (game_code, drawing.sequence)
+        )
+
+        self._db.commit()
+
+    def all_results_finished(self, game_code):
+        """Return True if all drawings have been assigned prompts and all results
+        thereof have been displayed"""
+        cursor = self._db.cursor()
+        cursor.execute(
+            """
+            SELECT 1 FROM round, drawing
+            WHERE round.game_code = ?
+              AND round.current = TRUE
+              AND drawing.round_id = round.id
+              AND drawing.sequence > (
+                  SELECT sequence FROM drawing
+                  WHERE round.game_code = ?
+                    AND round.current = TRUE
+                    AND drawing.round_id = round.id
+                    AND drawing.current = TRUE)
+            LIMIT 1
+            """,
+            (game_code,)
+        )
+
+        drawings_are_left = bool(cursor.fetchone())
+        return not drawings_are_left
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

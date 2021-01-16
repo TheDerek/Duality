@@ -3,6 +3,24 @@ import { connect } from "react-redux";
 
 import { assignPrompt } from "./actions"
 
+function Prompt(props) {
+  let tooltip = props.prompt.enabled
+    ? "Click if you think this prompt belongs to this drawing"
+    : "Prompt already chosen for a previous drawing";
+
+  return (
+    <div title={tooltip} className="text-center d-grid mb-3">
+      <button
+        onClick={ props.onClick(props.prompt.prompt) }
+        disabled={ props.inputDisabled || !props.prompt.enabled }
+        type="button"
+        className="btn btn-outline-primary">
+        { props.prompt.prompt }
+      </button>
+    </div>
+  );
+}
+
 class AssignPrompts extends React.Component {
   constructor(props) {
     super(props);
@@ -27,32 +45,22 @@ class AssignPrompts extends React.Component {
         </div>
         <div className="">
           <div className="row row-cols-1 row-cols-sm-3">
-            <div className="col text-center d-grid mb-3">
-              <button
-                onClick={ this.assignPrompt(this.props.prompts[0]) }
-                disabled={this.props.inputDisabled}
-                type="button"
-                className="btn btn-outline-primary">
-                { this.props.prompts[0] }
-              </button>
+            <div className="col">
+              <Prompt prompt={this.props.prompts[0]} onClick={this.assignPrompt}/>
             </div>
-            <div className="col text-center d-grid mb-3">
-              <button
-                onClick={ this.assignPrompt(this.props.prompts[1]) }
-                disabled={this.props.inputDisabled}
-                type="button"
-                className="btn btn-outline-primary">
-                { this.props.prompts[1] }
-              </button>
+            <div className="col">
+              <Prompt prompt={this.props.prompts[1]} onClick={this.assignPrompt}/>
             </div>
-            <div className="col text-center d-grid mb-3">
-              <button
-                onClick={ this.assignPrompt(null) }
-                disabled={ this.props.inputDisabled }
-                type="button"
-                className="btn btn-outline-secondary">
-                Nothing that I can identify
-              </button>
+            <div className="col">
+              <div title="Click if you do not have a prompt for this drawing" className="text-center d-grid mb-3">
+                <button
+                  onClick={ this.assignPrompt(null) }
+                  disabled={ this.props.inputDisabled }
+                  type="button"
+                  className="btn btn-outline-secondary">
+                  Nothing that I can identify
+                </button>
+              </div>
             </div>
           </div>
         </div>

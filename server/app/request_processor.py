@@ -243,8 +243,21 @@ async def finish_results(client: WebClient, request: dict):
     if not player.admin:
         raise PromptError("Player is not admin")
 
-    # Advance to the next assign prompts to drawing phase
-    pass
+    if store.get_game_state(code) != GameState.DISPLAY_RESULTS:
+        raise PromptError("Incorrect game state")
+
+    if store.all_results_finished(code):
+        await game_logic.prepare_display_scores(store, code)
+
+    players = store.get_players(code)
+
+    # Advance the drawing and send it to players
+    store.next_drawing(game_code=code)
+    response = response_generator.current_drawing(code)
+    await send_response_to_players(response, players)
+
+    # Redirect players to the assign prompts phase
+    await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)
 
 
 async def update_player(code: str, uuid: str):

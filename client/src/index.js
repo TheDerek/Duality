@@ -78,7 +78,8 @@ function messageReducer(state, name, data) {
     case "updateGameState": {
       return {
         ...state,
-        gameState: data.gameState
+        gameState: data.gameState,
+        inputDisabled: false,
       };
     }
     case "updatePlayer": {

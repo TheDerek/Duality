@@ -29,7 +29,7 @@ def prepare_draw_prompts(store: Store, game_code: str):
 
     # Generate a drawing for each player with two prompts
     for index, player in enumerate(players):
-        drawing_prompts: List[Prompt] = get_drawing_prompts(player, prompts)
+        drawing_prompts: List[Prompt] = _get_drawing_prompts(player, prompts)
         store.add_drawing(
             round_id,
             player.id_,
@@ -40,7 +40,11 @@ def prepare_draw_prompts(store: Store, game_code: str):
         )
 
 
-def get_drawing_prompts(player: Player, prompts: List[Prompt]) -> List[Prompt]:
+async def prepare_display_scores(store: Store, game_code: str):
+    pass
+
+
+def _get_drawing_prompts(player: Player, prompts: List[Prompt]) -> List[Prompt]:
     drawing_prompts: List[Prompt] = []
     drawing_prompts_player_ids = set()
     prompts_copy = list(prompts)
