@@ -229,6 +229,9 @@ async def assign_prompt(client: WebClient, request: dict):
 
     store.assign_prompt_to_current_image(code, player.id_, prompt)
 
+    # Update the player so they know what prompts they've assigned
+    await update_player(code, uuid)
+
     # Move players to the next state if the prompts have been submitted
     if store.prompts_assigned_for_current_round(code):
         response = response_generator.assigned_prompts(code)
@@ -238,7 +241,6 @@ async def assign_prompt(client: WebClient, request: dict):
 
     # Otherwise move this player to the waiting room and inform the others
     # he is finished
-    await update_player(code, uuid)
     await dispatcher.add_to_message_queue(
         client,
         response_generator.generate_update_game_state(GameState.WAITING_FOR_PLAYERS),
@@ -266,6 +268,9 @@ async def finish_results(client: WebClient, request: dict):
     store.next_drawing(game_code=code)
     response = response_generator.current_drawing(code)
     await send_response_to_players(response, players)
+
+    # Reset the player submission status
+    await reset_players_submission_status(store.get_players(code))
 
     # Redirect players to the assign prompts phase
     await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)

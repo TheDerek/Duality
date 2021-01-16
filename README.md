@@ -1,7 +1,6 @@
 # Duality (name pendng)
 
 ## Known bugs
-- Drawing sequences are not assigned correctly meaning we cannot get the next drawing
 
 ## TODO
 - [x] Correctly display waiting/done players in prompt submission
