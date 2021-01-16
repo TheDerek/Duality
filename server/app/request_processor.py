@@ -235,7 +235,15 @@ async def assign_prompt(client: WebClient, request: dict):
 
 
 @dispatcher.request("finishResults")
-async def finish_prompts(client: WebClient, request: dict):
+async def finish_results(client: WebClient, request: dict):
+    code: str = request["gameCode"]
+    uuid: str = store.get_uuid(client)
+    player: Player = store.get_player_from_game(code, uuid)
+
+    if not player.admin:
+        raise PromptError("Player is not admin")
+
+    # Advance to the next assign prompts to drawing phase
     pass
 
 

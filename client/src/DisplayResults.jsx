@@ -1,10 +1,12 @@
 import React from "react";
 import {connect} from "react-redux";
-import {useSpring, useChain, animated} from 'react-spring'
+import {useSpring, animated} from 'react-spring';
+
+import { finishResults } from './actions';
 
 const FIRST_WAIT = 3500;
 const NEXT_WAIT = 5000;
-const CORRECT_DELAY = 3000;
+const CORRECT_DELAY = 2500;
 
 function CorrectText(props) {
   if (props.correct) {
@@ -15,7 +17,6 @@ function CorrectText(props) {
 }
 
 function Prompt(props) {
-  console.log(props.prompt);
   let classes = "card mb-2";
 
   const animation = useSpring({
@@ -37,7 +38,8 @@ function Prompt(props) {
     to: {
       opacity: 1,
     },
-    delay: FIRST_WAIT + CORRECT_DELAY + NEXT_WAIT * props.index
+    delay: FIRST_WAIT + CORRECT_DELAY + NEXT_WAIT * props.index,
+    onRest: props.last ? props.onFinishedAnimation : null,
   });
 
   return (
@@ -59,7 +61,13 @@ function Prompt(props) {
 function PromptList(props) {
   const prompts = props.prompts;
   return prompts.map((prompt, index) => (
-    <Prompt key={index} prompt={prompt} index={index}/>
+    <Prompt
+      key={index}
+      prompt={prompt}
+      index={index}
+      last={index+1 === prompts.length}
+      onFinishedAnimation={props.onFinishedAnimation}
+    />
   ));
 }
 
@@ -84,9 +92,33 @@ function Drawing(props) {
 class DisplayResults extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      canContinue: false
+    }
+  }
+
+  onFinishedAnimation = () => {
+    this.setState({
+      ...this.state,
+      canContinue: true,
+    })
   }
 
   render() {
+    let continueButton = null;
+    if (this.props.player.admin) {
+      continueButton = (
+        <div className="d-grid">
+          <button
+            disabled={!this.props.player.admin || !this.state.canContinue || this.props.inputDisabled}
+            onClick={this.props.finishResults}
+            className="mb-2 btn btn-primary">
+            Continue
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div>
         <h3 className="text-center">What weaknesses does this monster have?</h3>
@@ -96,7 +128,11 @@ class DisplayResults extends React.Component {
             <Drawing drawing={this.props.drawing}/>
           </div>
           <div className="col-sm">
-            <PromptList prompts={this.props.prompts}/>
+            { continueButton }
+            <PromptList
+              prompts={this.props.prompts}
+              onFinishedAnimation={this.onFinishedAnimation}
+            />
           </div>
         </div>
       </div>
@@ -108,10 +144,13 @@ function mapStateToProps(state) {
   return {
     prompts: state.assignedPrompts,
     drawing: state.drawing,
+    player: state.currentPlayer,
+    inputDisabled: state.inputDisabled
   }
 }
 
 const mapDispatchToProps = {
+  finishResults,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(DisplayResults);
