@@ -124,20 +124,26 @@ async def submit_prompt(client: WebClient, request: dict):
     store.submit_prompt(code, player.id_, request["prompt"])
 
     if store.all_prompts_submitted_for_round(code):
+        # informing the players that this guy has finished his submissions
+        await update_player(code, uuid)
+
         # Prepare the next stage of the game
         game_logic.prepare_draw_prompts(store, code)
 
         # Send the players the data they need for the drawing stage
+        players: List[Player] = store.get_players(code)
         await asyncio.gather(
             *[
                 dispatcher.add_to_message_queue(
                     p.client, response_generator.drawing_prompts(p.id_)
                 )
-                for p in store.get_players(code)
+                for p in players
             ]
         )
 
+        # Reset the player submission status
         # Update the game states state and inform clients
+        await reset_players_submission_status(players)
         await change_state_and_inform(code, GameState.DRAW_PROMPTS)
         return
 
@@ -180,7 +186,12 @@ async def submit_drawing(client: WebClient, request: dict):
 
     store.set_player_drawing_image(code, player.id_, drawing)
 
+    # Inform players of updated player
+    await update_player(code, uuid)
+
     if store.all_drawings_submitted_for_round(code):
+        players = store.get_players(code)
+
         # Prepare the prompt assignment phase
         game_logic.prepare_assign_prompts(store, code)
 
@@ -189,15 +200,15 @@ async def submit_drawing(client: WebClient, request: dict):
         await asyncio.gather(
             *[
                 dispatcher.add_to_message_queue(p.client, response)
-                for p in store.get_players(code)
+                for p in players
             ]
         )
 
+        # Reset the player submission status
+        await reset_players_submission_status(players)
         await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)
     else:
         # Otherwise just redirect the user to the waiting screen
-        await update_player(code, uuid)
-
         await dispatcher.add_to_message_queue(
             client,
             response_generator.generate_update_game_state(
@@ -306,3 +317,8 @@ async def send_response_to_players(response: dict, players: List[Player]):
             for player in players
         ]
     )
+
+
+async def reset_players_submission_status(players: List[Player]):
+    response = response_generator.reset_submission_status()
+    await send_response_to_players(response, players)

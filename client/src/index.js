@@ -116,6 +116,15 @@ function messageReducer(state, name, data) {
         assignedPrompts: data.prompts
       }
     }
+    case "resetSubmissionStatus": {
+      return {
+        ...state,
+        players: state.players.map(player => ({
+          ...player,
+          submissionFinished: false,
+        }))
+      }
+    }
     default:
       return state;
   }

@@ -701,7 +701,7 @@ class Store:
                     AND drawing.current = TRUE)
             LIMIT 1
             """,
-            (game_code,)
+            (game_code, game_code)
         )
 
         drawings_are_left = bool(cursor.fetchone())

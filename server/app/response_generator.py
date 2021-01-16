@@ -77,6 +77,13 @@ class ResponseGenerator:
             }
         }
 
+    def reset_submission_status(self):
+        return {
+            "resetSubmissionStatus": {
+
+            }
+        }
+
     def _generate_assigned_prompts(self, prompts: List[AssignedPrompt]):
         return [
             {
