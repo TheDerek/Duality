@@ -261,16 +261,16 @@ async def finish_results(client: WebClient, request: dict):
 
     if store.all_results_finished(code):
         await game_logic.prepare_display_scores(store, code)
+        return
 
     players = store.get_players(code)
+
+    await reset_players_submission_status(players)
 
     # Advance the drawing and send it to players
     store.next_drawing(game_code=code)
     response = response_generator.current_drawing(code)
     await send_response_to_players(response, players)
-
-    # Reset the player submission status
-    await reset_players_submission_status(store.get_players(code))
 
     # Redirect players to the assign prompts phase
     await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)

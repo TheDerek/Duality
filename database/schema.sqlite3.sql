@@ -57,7 +57,8 @@ create table drawing
     player_id int     not null
         references player,
     round_id  int     not null
-        references round
+        references round,
+    current   int default 0 not null
 );
 
 create unique index drawing_id_uindex
@@ -68,20 +69,37 @@ create unique index player_id_uindex
 
 create table prompt
 (
-    prompt_number       INTEGER not null,
-    prompt              TEXT    not null,
-    id                  INTEGER not null
+    prompt_number INTEGER not null,
+    prompt        TEXT    not null,
+    id            INTEGER not null
         constraint prompt_pk
             primary key autoincrement,
-    drawing_id          int
+    drawing_id    int
         references drawing,
-    assigned_drawing_id int
-        references drawing,
-    round_id            int     not null
+    round_id      int     not null
         references round,
-    player_id           int     not null
+    player_id     int     not null
         references player
 );
+
+create table assigned_prompt
+(
+    id         integer not null
+        constraint assigned_prompts_pk
+            primary key autoincrement,
+    drawing_id int     not null
+        references drawing,
+    prompt_id  int
+        references prompt,
+    player_id  int     not null
+        references player
+);
+
+create unique index assigned_prompts_id_uindex
+    on assigned_prompt (id);
+
+create unique index assigned_prompts_player_id_drawing_id_uindex
+    on assigned_prompt (player_id, drawing_id);
 
 create unique index prompt_id_uindex
     on prompt (id);
@@ -90,5 +108,26 @@ CREATE VIEW game_current_round as
 select game_code, id as round_id, number as round_number
 from round
 where current = true;
+
+CREATE VIEW scores as
+SELECT player.id    as player_id,
+       round.id     as round_id,
+       round.number as round_number,
+       (
+           SELECT COUNT(1)
+           FROM assigned_prompt,
+                prompt
+           WHERE assigned_prompt.player_id = player.id
+             AND assigned_prompt.prompt_id = prompt.id
+             AND assigned_prompt.drawing_id = prompt.drawing_id
+             AND prompt.round_id = round.id
+       )            as score
+
+FROM game,
+     round,
+     player
+WHERE player.game_code = game.code
+  AND round.game_code = game.code
+  AND round.current = TRUE;
 
 
