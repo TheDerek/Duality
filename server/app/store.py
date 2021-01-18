@@ -56,7 +56,6 @@ class Prompt:
     prompt_number: int
     prompt: str
     drawing_id: Optional[int]
-    assigned_drawing_id: Optional[int]
     enabled: bool
 
 
@@ -65,6 +64,16 @@ class AssignedPrompt:
     player_name: str
     prompt: str
     correct: bool
+
+
+@dataclass()
+class Score:
+    previous: int
+    current_round: int
+
+    @property
+    def total(self):
+        return self.previous + self.current_round
 
 
 class GameState(Enum):
@@ -309,7 +318,7 @@ class Store:
         cursor: sqlite3.Cursor = self._db.cursor()
 
         sql = (
-            "SELECT prompt, prompt_number, id as id_, drawing_id, assigned_drawing_id, round_id, player_id, "
+            "SELECT prompt, prompt_number, id as id_, drawing_id, round_id, player_id, "
             "NOT EXISTS(SELECT 1 FROM assigned_prompt WHERE assigned_prompt.prompt_id=prompt.id) as enabled "
             "FROM prompt where round_id=?"
         )
@@ -706,6 +715,19 @@ class Store:
 
         drawings_are_left = bool(cursor.fetchone())
         return not drawings_are_left
+
+    def get_score(self, player_id: int) -> Score:
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT round_number, score FROM scores WHERE player_id=? ORDER BY round_number",
+            (player_id,)
+        )
+
+        rows = list(cursor.fetchall())
+        previous_score = sum(row["score"] for row in rows[:-1])
+        current_round_score = rows[-1]["score"]
+
+        return Score(previous_score, current_round_score)
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

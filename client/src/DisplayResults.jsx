@@ -105,18 +105,10 @@ class DisplayResults extends React.Component {
   }
 
   render() {
-    let continueButton = null;
-    if (this.props.player.admin) {
-      continueButton = (
-        <div className="d-grid">
-          <button
-            disabled={!this.props.player.admin || !this.state.canContinue || this.props.inputDisabled}
-            onClick={this.props.finishResults}
-            className="mb-2 btn btn-primary">
-            Continue
-          </button>
-        </div>
-      );
+    let displayContinueClass = "mb-2 btn btn-primary ";
+
+    if (!this.props.player.admin) {
+      displayContinueClass += "d-none"
     }
 
     return (
@@ -128,7 +120,14 @@ class DisplayResults extends React.Component {
             <Drawing drawing={this.props.drawing}/>
           </div>
           <div className="col-sm">
-            { continueButton }
+            <div className="d-grid">
+              <button
+                disabled={!this.props.player.admin || !this.state.canContinue || this.props.inputDisabled}
+                onClick={this.props.finishResults}
+                className={displayContinueClass}>
+                Continue
+              </button>
+            </div>
             <PromptList
               prompts={this.props.prompts}
               onFinishedAnimation={this.onFinishedAnimation}

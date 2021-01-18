@@ -259,9 +259,13 @@ async def finish_results(client: WebClient, request: dict):
     if store.get_game_state(code) != GameState.DISPLAY_RESULTS:
         raise PromptError("Incorrect game state")
 
+    # Display the scores
     if store.all_results_finished(code):
-        await game_logic.prepare_display_scores(store, code)
-        return
+        # Update all players with their scores for this round
+        await update_all_players(code, scores=True)
+
+        # Now the players have their scores we can change game state
+        return await change_state_and_inform(code, GameState.DISPLAY_SCORES)
 
     players = store.get_players(code)
 
@@ -292,6 +296,17 @@ async def update_player(code: str, uuid: str):
             for p in players
         ]
     )
+
+
+async def update_all_players(game_code: str, scores: bool = False):
+    players: List[Player] = store.get_players(game_code)
+    for player in players:
+        await dispatcher.add_to_message_queue(
+            player.client,
+            response_generator.generate_update_all_players(
+                game_code, players, player.id_, scores
+            )
+        )
 
 
 async def change_state_and_inform(game_code: str, new_state: GameState):

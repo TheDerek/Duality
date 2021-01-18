@@ -125,6 +125,13 @@ function messageReducer(state, name, data) {
         }))
       }
     }
+    case "updateAllPlayers": {
+      return {
+        ...state,
+        players: data.players,
+        currentPlayer: data.currentPlayer,
+      }
+    }
     default:
       return state;
   }

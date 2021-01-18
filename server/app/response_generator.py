@@ -19,13 +19,15 @@ class ResponseGenerator:
         ):
             state = GameState.WAITING_FOR_PLAYERS
 
+        display_scores: bool = state == GameState.DISPLAY_SCORES
+
         return {
             "joinGame": {
                 "gameCode": game_code,
-                "players": self._generate_players(game_code, player_id),
+                "players": self._generate_players(game_code, player_id, display_scores),
                 "admin": self._store.is_admin_of_game(player_id, game_code),
                 "currentPlayer": self._generate_player(
-                    game_code, player_id, private_info=True
+                    game_code, player_id, private_info=True, scores=display_scores
                 ),
                 "gameState": state.name,
                 "uuid": uuid,
@@ -41,12 +43,21 @@ class ResponseGenerator:
         return {"playerJoinedGame": {"player": self._generate_player(code, player_id)}}
 
     def generate_update_player(
-        self, code: str, player_id: int, status=None, private_info: bool = False
+        self, code: str, player_id: int, status=None, private_info: bool = False, scores: bool = False
     ):
         return {
             "updatePlayer": {
-                "player": self._generate_player(code, player_id, private_info),
+                "player": self._generate_player(code, player_id, private_info, scores),
                 "status": status,
+            }
+        }
+
+    def generate_update_all_players(self, game_code: str, players: List[Player], player_id: int, scores: bool = False):
+        """Generate a Response to update all players"""
+        return {
+            "updateAllPlayers": {
+                "players": self._generate_players(game_code, player_id, scores),
+                "currentPlayer": self._generate_player(game_code, player_id, True, scores)
             }
         }
 
@@ -95,7 +106,7 @@ class ResponseGenerator:
         ]
 
     def _generate_player(
-        self, game_code: str, player_id: int, private_info=False
+        self, game_code: str, player_id: int, private_info=False, scores=False
     ) -> dict:
         player: Player = self._store.get_player(player_id)
         prompt_count = self._store.player_prompt_count(game_code, player_id)
@@ -117,14 +128,22 @@ class ResponseGenerator:
                 "prompts": [{"prompt": prompt.prompt, "enabled": prompt.enabled} for prompt in prompts],
             }
 
+        if scores:
+            score = self._store.get_score(player_id)
+            response["score"] = {
+                "previous": score.previous,
+                "current_round": score.current_round,
+                "total": score.total
+            }
+
         return response
 
-    def _generate_players(self, game_code: str, player_id: int) -> list:
+    def _generate_players(self, game_code: str, player_id: int, scores: bool = False) -> list:
         players: List[Player] = self._store.get_players(game_code)
 
         return [
             self._generate_player(
-                game_code, player.id_, private_info=player_id == player.id_
+                game_code, player.id_, player_id == player.id_, scores
             )
             for player in players
         ]
