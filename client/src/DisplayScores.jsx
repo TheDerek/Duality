@@ -1,8 +1,10 @@
 import React from "react";
 import {connect} from "react-redux";
-import {useSpring, animated} from 'react-spring';
+import {useSprings, animated, useChain, useTrail} from 'react-spring';
+import {useRef} from "react";
 
-const PERCENT_PER_POINT = 100/6;
+const PERCENT_PER_POINT = 100 / 6;
+
 
 function getWidth(score) {
   const width = score * PERCENT_PER_POINT;
@@ -11,26 +13,65 @@ function getWidth(score) {
 
 function PlayerScore(props) {
   return (
-    <div className="mb-3">
-      <h5>{props.player.name} - {props.player.score.total}</h5>
+    <animated.div className="mb-3" style={props.fadeIn}>
+      <h5>
+        <div className="float-start">
+          {props.player.name}
+        </div>
+        <div className="float-end">
+          {props.player.score.previous}
+          <animated.span style={props.newScore}>
+            &nbsp;+ {props.player.score.current_round} &#8680; {props.player.score.total}
+          </animated.span>
+        </div>
+        <div className="clearfix"/>
+      </h5>
       <div className="progress" style={{height: "30px"}}>
         <div
           className="progress-bar"
           role="progressbar"
           style={{width: getWidth(props.player.score.previous_round)}}/>
-        <div
+        <animated.div
           className="progress-bar bg-success"
           role="progressbar"
-          style={{width: getWidth(props.player.score.current_round)}}/>
+          style={props.elongate}/>
       </div>
-    </div>
+    </animated.div>
   )
 }
 
 function Scores(props) {
+  const fadeInRef = useRef()
+  const fadeIn = useSprings(props.players.length, props.players.map((player, index) => ({
+    from: {opacity: 0},
+    to: {opacity: 1},
+    delay: 500 + index * 500,
+    ref: fadeInRef,
+  })));
+
+  const elongateRef = useRef()
+  const elongate = useSprings(props.players.length, props.players.map((player, index) => ({
+    from: {width: '0%'},
+    to: {width: getWidth(player.score.current_round)},
+    delay: 500 + index * 1000,
+    ref: elongateRef,
+  })));
+
+  const newScoreRef = useRef()
+  const newScore = useSprings(props.players.length, props.players.map((player, index) => ({
+    from: {opacity: 0},
+    to: {opacity: 1},
+    ref: newScoreRef,
+    delay: 500 + index * 1000,
+    onRest: index + 1 === props.players.length ? props.onFinishedAnimation : null,
+  })));
+
+  useChain([fadeInRef, elongateRef, newScoreRef])
+
   return (
     <div>
-      { props.players.map((player, index) => <PlayerScore key={index} player={player}/>) }
+      {/*{ trail.map(props => <animated.div style={props}>Heyoh</animated.div>) }*/}
+      {props.players.map((player, index) => <PlayerScore key={index} player={player} fadeIn={fadeIn[index]} elongate={elongate[index]} newScore={newScore[index]}/>)}
     </div>
   )
 }
@@ -61,7 +102,7 @@ class DisplayScores extends React.Component {
       <div>
         <h3 className="text-center mb-3">Results for round 1</h3>
         <div className="d-grid">
-          <Scores players={this.props.players}/>
+          <Scores players={this.props.players} onFinishedAnimation={this.onFinishedAnimation}/>
           <button
             disabled={!this.props.player.admin || !this.state.canContinue || this.props.inputDisabled}
             onClick={this.props.finishResults}
@@ -81,7 +122,6 @@ function mapStateToProps(state) {
   }
 }
 
-const mapDispatchToProps = {
-}
+const mapDispatchToProps = {}
 
 export default connect(mapStateToProps, mapDispatchToProps)(DisplayScores);
