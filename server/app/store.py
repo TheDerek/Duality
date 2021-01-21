@@ -98,7 +98,7 @@ class Store:
         # Maps connected clients to their hashes
         self._clients: Dict[int, Optional[WebClient]] = defaultdict(lambda: None)
 
-        path = "/home/derek/git/boss-fight/database/next-round.db.sqlite3"
+        path = "/home/derek/git/boss-fight/database/db.sqlite3"
         # temp_dir = tempfile.gettempdir()
         # temp_path = os.path.join(temp_dir, 'db.sqlite3')
         # shutil.copy2(path, temp_path)

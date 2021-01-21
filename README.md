@@ -2,7 +2,6 @@
 
 ## Known bugs
 - [ ] Scores from previous rounds do not show
-- [ ] Players can't submit after starting a new round, but can if they reload
 
 ## TODO
 - [x] Correctly display waiting/done players in prompt submission

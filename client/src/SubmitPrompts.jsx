@@ -45,6 +45,7 @@ class SubmitPrompts extends React.Component {
     }
 
     this.props.submitPrompt(this.props.gameCode, this.state.promptValue.trim());
+    this.setState({promptValue: ""});
   };
 
   canSubmit = () => {

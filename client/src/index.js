@@ -131,6 +131,7 @@ function messageReducer(state, name, data) {
         players: data.players,
         currentPlayer: data.currentPlayer,
         gameState: data.gameState,
+        inputDisabled: false,
       }
     }
     default:
