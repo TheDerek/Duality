@@ -32,7 +32,7 @@ function PlayerScore(props) {
         <div
           className="progress-bar"
           role="progressbar"
-          style={{width: getWidth(props.player.score.previous_round)}}/>
+          style={{width: getWidth(props.player.score.previous)}}/>
         <animated.div
           className="progress-bar bg-success"
           role="progressbar"

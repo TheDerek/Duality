@@ -127,7 +127,6 @@ FROM game,
      round,
      player
 WHERE player.game_code = game.code
-  AND round.game_code = game.code
-  AND round.current = TRUE;
+  AND round.game_code = game.code;
 
 

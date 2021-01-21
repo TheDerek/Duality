@@ -1,7 +1,6 @@
 # Duality (name pendng)
 
 ## Known bugs
-- [ ] Scores from previous rounds do not show
 
 ## TODO
 - [x] Correctly display waiting/done players in prompt submission
