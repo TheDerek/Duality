@@ -3,6 +3,8 @@ import {connect} from "react-redux";
 import {useSprings, animated, useChain, useTrail} from 'react-spring';
 import {useRef} from "react";
 
+import {nextRound} from "./actions"
+
 const PERCENT_PER_POINT = 100 / 6;
 
 
@@ -105,7 +107,7 @@ class DisplayScores extends React.Component {
           <Scores players={this.props.players} onFinishedAnimation={this.onFinishedAnimation}/>
           <button
             disabled={!this.props.player.admin || !this.state.canContinue || this.props.inputDisabled}
-            onClick={this.props.finishResults}
+            onClick={this.props.nextRound}
             className={displayContinueClass}>
             Continue
           </button>
@@ -122,6 +124,8 @@ function mapStateToProps(state) {
   }
 }
 
-const mapDispatchToProps = {}
+const mapDispatchToProps = {
+  nextRound,
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(DisplayScores);

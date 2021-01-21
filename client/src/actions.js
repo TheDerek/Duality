@@ -98,7 +98,7 @@ export function assignPrompt(prompt) {
   }
 }
 
-export function finishResults(prompt) {
+export function finishResults() {
   return (dispatch, getState) => {
     dispatch(disableInput());
     dispatch(send({
@@ -112,5 +112,16 @@ export function finishResults(prompt) {
 export function disableInput() {
   return {
     type: DISABLE_INPUT
+  }
+}
+
+export function nextRound() {
+  return (dispatch, getState) => {
+    dispatch(disableInput());
+    dispatch(send({
+      nextRound: {
+        gameCode: getState().gameCode,
+      }
+    }));
   }
 }

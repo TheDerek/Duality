@@ -280,6 +280,28 @@ async def finish_results(client: WebClient, request: dict):
     await change_state_and_inform(code, GameState.ASSIGN_PROMPTS)
 
 
+@dispatcher.request("nextRound")
+async def next_round(client: WebClient, request: dict):
+    code: str = request["gameCode"]
+    uuid: str = store.get_uuid(client)
+    player: Player = store.get_player_from_game(code, uuid)
+
+    if not player.admin:
+        raise PromptError("Player is not admin")
+
+    if store.get_game_state(code) != GameState.DISPLAY_SCORES:
+        raise PromptError("Incorrect game state")
+
+    # Create the next round of the game
+    store.create_next_round(code)
+
+    # Update the game state in the db
+    store.update_game_state(code, GameState.SUBMIT_PROMPTS)
+
+    # Update all the players
+    await update_all_players(code)
+
+
 async def update_player(code: str, uuid: str):
     """Update the given player for all clients in the current game"""
     # informing the players that this guy has finished his submissions

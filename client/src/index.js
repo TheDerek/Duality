@@ -130,6 +130,7 @@ function messageReducer(state, name, data) {
         ...state,
         players: data.players,
         currentPlayer: data.currentPlayer,
+        gameState: data.gameState,
       }
     }
     default:

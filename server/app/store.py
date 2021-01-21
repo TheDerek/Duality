@@ -297,7 +297,7 @@ class Store:
 
     def create_next_round(self, code: str) -> int:
         old_number = self.get_current_round_number(code)
-        new_number = old_number + 1 if old_number else 0
+        new_number = old_number + 1 if old_number is not None else 0
 
         # Remove current from any old rounds in the game
         self._db.execute("UPDATE round SET current=FALSE WHERE game_code=?", (code,))

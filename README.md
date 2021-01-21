@@ -1,6 +1,8 @@
 # Duality (name pendng)
 
 ## Known bugs
+- [ ] Prompts for the second round (onwards) that are given for the drawing are
+  from the previous round
 
 ## TODO
 - [x] Correctly display waiting/done players in prompt submission

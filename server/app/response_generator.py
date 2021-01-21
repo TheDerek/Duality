@@ -57,7 +57,8 @@ class ResponseGenerator:
         return {
             "updateAllPlayers": {
                 "players": self._generate_players(game_code, player_id, scores),
-                "currentPlayer": self._generate_player(game_code, player_id, True, scores)
+                "currentPlayer": self._generate_player(game_code, player_id, True, scores),
+                "gameState": self._store.get_game_state(game_code).name
             }
         }
 
