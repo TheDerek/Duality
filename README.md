@@ -1,8 +1,8 @@
 # Duality (name pendng)
 
 ## Known bugs
-- [ ] Prompts for the second round (onwards) that are given for the drawing are
-  from the previous round
+- [ ] Scores from previous rounds do not show
+- [ ] Players can't submit after starting a new round, but can if they reload
 
 ## TODO
 - [x] Correctly display waiting/done players in prompt submission

@@ -135,7 +135,7 @@ async def submit_prompt(client: WebClient, request: dict):
         await asyncio.gather(
             *[
                 dispatcher.add_to_message_queue(
-                    p.client, response_generator.drawing_prompts(p.id_)
+                    p.client, response_generator.drawing_prompts(p.id_, code)
                 )
                 for p in players
             ]
@@ -297,6 +297,9 @@ async def next_round(client: WebClient, request: dict):
 
     # Update the game state in the db
     store.update_game_state(code, GameState.SUBMIT_PROMPTS)
+
+    # Reset player submissions
+    await reset_players_submission_status(store.get_players(code))
 
     # Update all the players
     await update_all_players(code)

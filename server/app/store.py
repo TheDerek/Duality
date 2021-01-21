@@ -1,6 +1,9 @@
 import random
 import string
 import sqlite3
+import tempfile
+import os
+import shutil
 
 from collections import defaultdict
 from enum import Enum, auto
@@ -95,9 +98,15 @@ class Store:
         # Maps connected clients to their hashes
         self._clients: Dict[int, Optional[WebClient]] = defaultdict(lambda: None)
 
+        path = "/home/derek/git/boss-fight/database/next-round.db.sqlite3"
+        # temp_dir = tempfile.gettempdir()
+        # temp_path = os.path.join(temp_dir, 'db.sqlite3')
+        # shutil.copy2(path, temp_path)
+
         self._db: sqlite3.Connection = sqlite3.connect(
-            "/home/derek/git/boss-fight/database/db.sqlite3"
+            path
         )
+
         self._db.row_factory = sqlite3.Row
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -518,11 +527,13 @@ class Store:
             for row in cursor
         ]
 
-    def get_drawing_prompts_for_player(self, player_id):
+    def get_drawing_prompts_for_player(self, player_id, game_code):
+        round_id: int = self.get_current_round_id(game_code)
+
         cursor = self._db.cursor()
         cursor.execute(
-            "SELECT prompt FROM prompt INNER JOIN drawing d on prompt.drawing_id = d.id WHERE d.player_id=?",
-            (player_id,),
+            "SELECT prompt FROM prompt INNER JOIN drawing d on prompt.drawing_id = d.id WHERE d.player_id=? AND prompt.round_id=?",
+            (player_id, round_id),
         )
         return [row["prompt"] for row in cursor]
 

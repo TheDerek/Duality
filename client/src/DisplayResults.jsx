@@ -93,7 +93,8 @@ class DisplayResults extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      canContinue: false
+      // Can continue automatically if there are no prompts
+      canContinue: this.props.prompts.length === 0
     }
   }
 

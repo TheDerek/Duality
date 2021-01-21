@@ -31,7 +31,7 @@ class ResponseGenerator:
                 ),
                 "gameState": state.name,
                 "uuid": uuid,
-                "drawingPrompts": self._store.get_drawing_prompts_for_player(player_id),
+                "drawingPrompts": self._store.get_drawing_prompts_for_player(player_id, game_code),
                 "drawing": self._store.get_current_drawing_image(game_code),
                 "assignedPrompts": self._generate_assigned_prompts(
                     self._store.get_assigned_prompts(game_code)
@@ -62,9 +62,9 @@ class ResponseGenerator:
             }
         }
 
-    def drawing_prompts(self, player_id: int):
+    def drawing_prompts(self, player_id: int, game_code: str):
         # Get the players drawing
-        prompts: List[str] = self._store.get_drawing_prompts_for_player(player_id)
+        prompts: List[str] = self._store.get_drawing_prompts_for_player(player_id, game_code)
         return {"setDrawingPrompts": {"prompts": prompts}}
 
     def current_drawing(self, game_code):
