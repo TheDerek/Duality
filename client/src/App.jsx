@@ -47,7 +47,7 @@ class App extends React.Component {
       <div>
         <nav className="navbar navbar-light bg-light mb-4">
           <div className="container-fluid game-container">
-            <span className="navbar-brand mb-0 h1">Supervillain Smackdown</span>
+            <span className="navbar-brand mb-0 h1">Duality</span>
             { this.getGameCode() }
           </div>
         </nav>
