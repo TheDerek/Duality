@@ -114,8 +114,7 @@ class DisplayResults extends React.Component {
 
     return (
       <div>
-        <h3 className="text-center">What weaknesses does this monster have?</h3>
-        <p className="text-center"><em>Drawing 1 / 4</em></p>
+        <h3 className="text-center mb-3">What weaknesses does this monster have?</h3>
         <div className="row">
           <div className="col-sm">
             <Drawing drawing={this.props.drawing}/>

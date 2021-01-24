@@ -1,8 +1,10 @@
 import { send } from '@giantmachines/redux-websocket';
+import { getInitialState } from "./state";
 
 export const SET_UUID = "SET_UUID";
 export const DISABLE_INPUT = "DISABLE_INPUT";
 export const REPORT_ERRORS = "REPORT_ERRORS";
+export const BACK_TO_MENU = "BACK_TO_MENU";
 
 export function createGame(playerName, uuid) {
   return (dispatch) => {
@@ -119,5 +121,11 @@ export function nextRound() {
         gameCode: getState().gameCode,
       }
     }));
+  }
+}
+
+export function backToMenu() {
+  return {
+    type: BACK_TO_MENU
   }
 }

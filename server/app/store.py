@@ -740,6 +740,14 @@ class Store:
 
         return Score(previous_score, current_round_score)
 
+    def is_game_finished(self, game_code: str) -> bool:
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT round_number>=? FROM game_current_round WHERE game_code=?",
+            (constants.NUMBER_OF_ROUNDS - 1, game_code)
+        )
+        return bool(cursor.fetchone())
+
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()
         return bool(

@@ -264,6 +264,12 @@ async def finish_results(client: WebClient, request: dict):
         # Update all players with their scores for this round
         await update_all_players(code, scores=True)
 
+        if store.is_game_finished(code):
+            await send_response_to_players(
+                response_generator.finished_game(),
+                store.get_players(code)
+            )
+
         # Now the players have their scores we can change game state
         return await change_state_and_inform(code, GameState.DISPLAY_SCORES)
 

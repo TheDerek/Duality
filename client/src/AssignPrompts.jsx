@@ -12,9 +12,9 @@ function Prompt(props) {
     <div title={tooltip} className="text-center d-grid mb-3">
       <button
         onClick={ props.onClick(props.prompt.prompt) }
-        disabled={ props.inputDisabled || !props.prompt.enabled }
+        disabled={ props.disabled || !props.prompt.enabled }
         type="button"
-        className="btn btn-outline-primary">
+        className="btn btn-primary">
         { props.prompt.prompt }
       </button>
     </div>
@@ -36,7 +36,6 @@ class AssignPrompts extends React.Component {
     return (
       <div>
         <h3 className="text-center">What weaknesses does this monster have?</h3>
-        <p className="text-center"><em>Drawing 1 / 4</em></p>
         <div className="text-center mb-4">
           <img
             className="border mw-100"
@@ -46,10 +45,10 @@ class AssignPrompts extends React.Component {
         <div className="">
           <div className="row row-cols-1 row-cols-sm-3">
             <div className="col">
-              <Prompt prompt={this.props.prompts[0]} onClick={this.assignPrompt}/>
+              <Prompt prompt={this.props.prompts[0]} onClick={this.assignPrompt} disabled={this.props.inputDisabled}/>
             </div>
             <div className="col">
-              <Prompt prompt={this.props.prompts[1]} onClick={this.assignPrompt}/>
+              <Prompt prompt={this.props.prompts[1]} onClick={this.assignPrompt} disabled={this.props.inputDisabled}/>
             </div>
             <div className="col">
               <div title="Click if you do not have a prompt for this drawing" className="text-center d-grid mb-3">
@@ -57,7 +56,7 @@ class AssignPrompts extends React.Component {
                   onClick={ this.assignPrompt(null) }
                   disabled={ this.props.inputDisabled }
                   type="button"
-                  className="btn btn-outline-secondary">
+                  className="btn btn-secondary">
                   Nothing that I can identify
                 </button>
               </div>

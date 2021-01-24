@@ -36,6 +36,7 @@ class ResponseGenerator:
                 "assignedPrompts": self._generate_assigned_prompts(
                     self._store.get_assigned_prompts(game_code)
                 ),
+                "isGameFinished": self._store.is_game_finished(game_code)
             }
         }
 
@@ -95,6 +96,13 @@ class ResponseGenerator:
 
             }
         }
+
+    def finished_game(self):
+            return {
+                "finishedGame": {
+
+                }
+            }
 
     def _generate_assigned_prompts(self, prompts: List[AssignedPrompt]):
         return [

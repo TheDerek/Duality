@@ -1,9 +1,9 @@
 import React from "react";
 import {connect} from "react-redux";
-import {useSprings, animated, useChain, useTrail} from 'react-spring';
+import {useSprings, animated, useChain} from 'react-spring';
 import {useRef} from "react";
 
-import {nextRound} from "./actions"
+import {nextRound,backToMenu} from "./actions"
 
 const PERCENT_PER_POINT = 100 / 6;
 
@@ -93,24 +93,49 @@ class DisplayScores extends React.Component {
     })
   }
 
-  render() {
+  getTitle = () => {
+    if (this.props.isGameFinished) {
+      return "Final results";
+    } else {
+      return "Results for round";
+    }
+  }
+
+  getButton = () => {
     let displayContinueClass = "mt-2 btn btn-primary ";
 
-    if (!this.props.player.admin) {
-      displayContinueClass += "d-none"
+    if (!this.props.isGameFinished && !this.props.player.admin) {
+      return null;
     }
 
+    if (!this.props.isGameFinished) {
+      return (
+        <button
+          disabled={!this.props.player.admin || !this.state.canContinue || this.props.inputDisabled}
+          onClick={this.props.nextRound}
+          className={displayContinueClass}>
+          Continue
+        </button>
+      )
+    } else {
+      return (
+        <button
+          disabled={!this.state.canContinue}
+          onClick={this.props.backToMenu}
+          className={displayContinueClass}>
+          Back to menu
+        </button>
+      )
+    }
+  }
+
+  render() {
     return (
       <div>
-        <h3 className="text-center mb-3">Results for round 1</h3>
+        <h3 className="text-center mb-3">{ this.getTitle() }</h3>
         <div className="d-grid">
           <Scores players={this.props.players} onFinishedAnimation={this.onFinishedAnimation}/>
-          <button
-            disabled={!this.props.player.admin || !this.state.canContinue || this.props.inputDisabled}
-            onClick={this.props.nextRound}
-            className={displayContinueClass}>
-            Continue
-          </button>
+          { this.getButton() }
         </div>
       </div>
     )
@@ -120,12 +145,14 @@ class DisplayScores extends React.Component {
 function mapStateToProps(state) {
   return {
     player: state.currentPlayer,
-    players: state.players
+    players: state.players,
+    isGameFinished: state.isGameFinished,
   }
 }
 
 const mapDispatchToProps = {
   nextRound,
+  backToMenu
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(DisplayScores);

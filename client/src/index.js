@@ -34,6 +34,10 @@ const gameMiddleware = storeAPI => next => action => {
       localStorage.setItem(LOCAL_STORAGE_GAME_CODE, data.joinGame.gameCode);
       localStorage.setItem(LOCAL_STORAGE_UUID, data.joinGame.uuid)
     }
+
+    if (name === "finishedGame") {
+      localStorage.removeItem(LOCAL_STORAGE_GAME_CODE);
+    }
   }
 
   return next(action);

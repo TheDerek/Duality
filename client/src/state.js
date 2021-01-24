@@ -30,6 +30,7 @@ export function getInitialState() {
     drawingPrompts: [],
     drawing: null,
     inputDisabled: false,
-    assignedPrompts: []
+    assignedPrompts: [],
+    isGameFinished: false,
   }
 }

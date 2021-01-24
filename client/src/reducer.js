@@ -1,5 +1,5 @@
 import {getInitialState, GAME_STATES} from "./state";
-import {DISABLE_INPUT, REPORT_ERRORS} from "./actions";
+import {DISABLE_INPUT, REPORT_ERRORS, BACK_TO_MENU} from "./actions";
 
 function messageReducer(state, name, data) {
   switch(name) {
@@ -23,6 +23,8 @@ function messageReducer(state, name, data) {
         drawing: data.drawing,
         assignedPrompts: data.assignedPrompts,
         errors: [],
+        inputDisabled: false,
+        isGameFinished: data.isGameFinished,
       };
     }
     case "playerJoinedGame": {
@@ -96,6 +98,12 @@ function messageReducer(state, name, data) {
         errors: [],
       }
     }
+    case "finishedGame": {
+      return {
+        ...state,
+        isGameFinished: true,
+      }
+    }
     default:
       return state;
   }
@@ -134,6 +142,8 @@ export function reducer(state = getInitialState(), action) {
         ...state,
         inputDisabled: true
       }
+    case BACK_TO_MENU:
+      return getInitialState();
     default:
       return state;
   }
