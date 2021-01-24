@@ -27,16 +27,15 @@ SITUATIONS: List[Situation] = [
     ),
     Situation(
         "You use a newly developed time machine to travel back in time. To make your current time a better place"
-        " you decide to save _ from an untimely death.",
-        "Draw the ideal person, half _ and half _",
-        "Who is this person comprised of?"
+        " you stop _ from being invented",
+        "Draw world without _ and _",
+        "What does this world lack?"
     ),
     Situation(
         "For some inexplicable reason you are chosen to man the first interstellar voyage of human kind."
-        " During this voyage you encounter an alien species who you are surprised to find look eerily similar to a"
-        " _, a common household object.",
-        "Draw an alien who looks similar to both a _ and a _",
-        "What objects is this alien similar to?"
+        " During this voyage you encounter an alien species who you are surprised to find look eerily similar to _.",
+        "Draw an alien who looks similar to both _ and _",
+        "To what or whom does this alien bear an uncommon resemblance to?"
     ),
     Situation(
         "As a great explorer, you have discovered many wonders and ancient civilisations. However by far and away"
