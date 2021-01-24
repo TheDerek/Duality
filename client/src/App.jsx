@@ -1,6 +1,8 @@
 import React from 'react';
 import {connect} from "react-redux";
 
+import { GAME_STATES } from "./state";
+
 import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
 import SubmitPrompts from "./SubmitPrompts";
@@ -9,17 +11,6 @@ import WaitingForPlayers from "./WaitingForPlayers";
 import AssignPrompts from "./AssignPrompts";
 import DisplayResults from "./DisplayResults";
 import DisplayScores from "./DisplayScores";
-
-export const GAME_STATES = {
-  LOBBY: "LOBBY",
-  WAITING_ROOM: "WAITING_ROOM",
-  SUBMIT_PROMPTS: "SUBMIT_PROMPTS",
-  DRAW_PROMPTS: "DRAW_PROMPTS",
-  WAITING_FOR_PLAYERS: "WAITING_FOR_PLAYERS",
-  ASSIGN_PROMPTS: "ASSIGN_PROMPTS",
-  DISPLAY_RESULTS: "DISPLAY_RESULTS",
-  DISPLAY_SCORES: "DISPLAY_SCORES"
-};
 
 class App extends React.Component {
   #gameStates = {
