@@ -15,6 +15,7 @@ from websockets.server import WebSocketServerProtocol as WebClient
 
 from app import constants
 from app.exceptions import DatabaseError, PromptError
+from app.situations import SITUATIONS, Situation
 
 
 @dataclass()
@@ -311,10 +312,12 @@ class Store:
         # Remove current from any old rounds in the game
         self._db.execute("UPDATE round SET current=FALSE WHERE game_code=?", (code,))
 
+        situation_index, _ = self._get_random_unused_situation(code)
+
         # Add the new round
         self._db.execute(
-            "INSERT INTO round (number, game_code, current) VALUES (?, ?, True)",
-            (new_number, code),
+            "INSERT INTO round (number, game_code, current, situation_index) VALUES (?, ?, True, ?)",
+            (new_number, code, situation_index),
         )
 
         self._db.commit()
@@ -743,10 +746,46 @@ class Store:
     def is_game_finished(self, game_code: str) -> bool:
         cursor = self._db.cursor()
         cursor.execute(
-            "SELECT round_number>=? FROM game_current_round WHERE game_code=?",
+            "SELECT round_number>=? as finished FROM game_current_round WHERE game_code=?",
             (constants.NUMBER_OF_ROUNDS - 1, game_code)
         )
-        return bool(cursor.fetchone())
+
+        row = cursor.fetchone()
+        if not row:
+            return False
+
+        return bool(row["finished"])
+
+    def get_current_situation(self, game_code) -> Optional[Situation]:
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT situation_index as i FROM round WHERE game_code=? AND current=TRUE",
+            (game_code,)
+        )
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        situation_index = row["i"]
+        return SITUATIONS[situation_index]
+
+    def _get_random_unused_situation(self, game_code: str) -> Tuple[int, Situation]:
+        """Fetch a random situation that has not been used by the given game"""
+        # First fetch the situations already used by the game
+        cursor = self._db.cursor()
+        cursor.execute(
+            "SELECT situation_index as i FROM round WHERE game_code=?",
+            (game_code,)
+        )
+
+        # Fetch a random situation that we have not used yet
+        used_situation_indices: Set[int] = set(row["i"] for row in cursor)
+        available_situations = [
+            (index, situation) for index, situation in enumerate(SITUATIONS) if index not in used_situation_indices
+        ]
+
+        return random.choice(available_situations)
 
     def _database_has_user(self, uuid: str) -> bool:
         cursor: sqlite3.Cursor = self._db.cursor()

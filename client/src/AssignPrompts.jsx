@@ -35,7 +35,7 @@ class AssignPrompts extends React.Component {
   render() {
     return (
       <div>
-        <h3 className="text-center">What weaknesses does this monster have?</h3>
+        <h3 className="text-center">{ this.props.situation }</h3>
         <div className="text-center mb-4">
           <img
             className="border mw-100"
@@ -79,7 +79,8 @@ function mapStateToProps(state) {
     prompts: state.currentPlayer.private.prompts,
     gameCode: state.gameCode,
     drawing: state.drawing,
-    inputDisabled: state.inputDisabled
+    inputDisabled: state.inputDisabled,
+    situation: state.situation.results
   }
 }
 

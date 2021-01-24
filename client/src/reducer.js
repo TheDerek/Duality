@@ -25,6 +25,7 @@ function messageReducer(state, name, data) {
         errors: [],
         inputDisabled: false,
         isGameFinished: data.isGameFinished,
+        situation: data.situation,
       };
     }
     case "playerJoinedGame": {
@@ -102,6 +103,12 @@ function messageReducer(state, name, data) {
       return {
         ...state,
         isGameFinished: true,
+      }
+    }
+    case "setSituation": {
+      return {
+        ...state,
+        situation: data.situation,
       }
     }
     default:

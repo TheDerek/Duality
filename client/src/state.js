@@ -32,5 +32,6 @@ export function getInitialState() {
     inputDisabled: false,
     assignedPrompts: [],
     isGameFinished: false,
+    situation: null,
   }
 }

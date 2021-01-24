@@ -19,7 +19,7 @@ class DrawPrompts extends React.Component {
     return (
       <div>
         <h3 className="mb-4 text-center">
-          Draw a hero that posses both { this.props.drawingPrompts[0] } and { this.props.drawingPrompts[1] }.
+          { this.props.situation.replace("_", this.props.drawingPrompts[0]).replace("_", this.props.drawingPrompts[1]) }
         </h3>
         <div className="text-center">
           <SketchPad ref={this.sketchPadRef} />
@@ -37,7 +37,8 @@ class DrawPrompts extends React.Component {
 function mapStateToProps(state) {
   return {
     gameCode: state.gameCode,
-    drawingPrompts: state.drawingPrompts
+    drawingPrompts: state.drawingPrompts,
+    situation: state.situation.drawing
   }
 }
 

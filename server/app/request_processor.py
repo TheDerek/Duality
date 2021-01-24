@@ -107,6 +107,10 @@ async def start_game(client: WebClient, request: dict):
     # Create the first round of the game
     store.create_next_round(code)
 
+    # Send the current situation over to the players
+    response = response_generator.generate_set_situation(code)
+    await send_response_to_players(response, store.get_players(code))
+
     # Update the game states state and inform clients
     await change_state_and_inform(code, GameState.SUBMIT_PROMPTS)
 
@@ -304,10 +308,16 @@ async def next_round(client: WebClient, request: dict):
     # Update the game state in the db
     store.update_game_state(code, GameState.SUBMIT_PROMPTS)
 
-    # Reset player submissions
-    await reset_players_submission_status(store.get_players(code))
+    players: List[Player] = store.get_players(code)
 
-    # Update all the players
+    # Reset player submissions
+    await reset_players_submission_status(players)
+
+    # Send over the next situation
+    response = response_generator.generate_set_situation(code)
+    await send_response_to_players(response, players)
+
+    # Update all the players (along with the current game state)
     await update_all_players(code)
 
 

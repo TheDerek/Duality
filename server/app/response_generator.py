@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Optional
 
+from app.situations import Situation
 from app.store import Store, Player, GameState, Prompt, Drawing, AssignedPrompt
 
 
@@ -36,7 +37,16 @@ class ResponseGenerator:
                 "assignedPrompts": self._generate_assigned_prompts(
                     self._store.get_assigned_prompts(game_code)
                 ),
-                "isGameFinished": self._store.is_game_finished(game_code)
+                "isGameFinished": self._store.is_game_finished(game_code),
+                "situation": self._situation(self._store.get_current_situation(game_code))
+            }
+        }
+
+    def generate_set_situation(self, game_code: str):
+        situation: Optional[Situation] = self._store.get_current_situation(game_code)
+        return {
+            "setSituation": {
+                "situation": self._situation(situation)
             }
         }
 
@@ -103,6 +113,16 @@ class ResponseGenerator:
 
                 }
             }
+
+    def _situation(self, situation: Optional[Situation]):
+        if not situation:
+            return None
+
+        return {
+            "prompts": situation.prompts,
+            "drawing": situation.drawing,
+            "results": situation.results
+        }
 
     def _generate_assigned_prompts(self, prompts: List[AssignedPrompt]):
         return [

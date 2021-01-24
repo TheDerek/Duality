@@ -4,9 +4,9 @@ import {useSpring, animated} from 'react-spring';
 
 import { finishResults } from './actions';
 
-const FIRST_WAIT = 3500;
-const NEXT_WAIT = 5000;
-const CORRECT_DELAY = 2500;
+const FIRST_WAIT = 1500;
+const NEXT_WAIT = 2000;
+const CORRECT_DELAY = 1500;
 
 function CorrectText(props) {
   if (props.correct) {
@@ -114,7 +114,7 @@ class DisplayResults extends React.Component {
 
     return (
       <div>
-        <h3 className="text-center mb-3">What weaknesses does this monster have?</h3>
+        <h3 className="text-center mb-3">{ this.props.situation }</h3>
         <div className="row">
           <div className="col-sm">
             <Drawing drawing={this.props.drawing}/>
@@ -144,7 +144,8 @@ function mapStateToProps(state) {
     prompts: state.assignedPrompts,
     drawing: state.drawing,
     player: state.currentPlayer,
-    inputDisabled: state.inputDisabled
+    inputDisabled: state.inputDisabled,
+    situation: state.situation.results
   }
 }
 

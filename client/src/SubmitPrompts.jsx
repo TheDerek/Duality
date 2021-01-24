@@ -84,7 +84,7 @@ class SubmitPrompts extends React.Component {
         <div className="card mt-4">
           <div className="card-body">
             <h5 className="card-title mb-3">
-              What ability would be essential in a fight against a supervillain?
+              { this.props.situation }
             </h5>
             <Errors errors={this.props.errors}/>
             <div className="ps-1 pe-2">
@@ -105,8 +105,7 @@ class SubmitPrompts extends React.Component {
                 value={this.state.promptValue}
                 name="attribute"
                 type="text"
-                className="form-control"
-                placeholder="emotionally stable" />
+                className="form-control"/>
               <button
                 disabled={!this.canSubmit() || this.isSubmitting() || this.props.currentPlayer.submissionFinished}
                 className="btn btn-primary">
@@ -128,7 +127,8 @@ function mapStateToProps(state) {
     errors: state.errors,
     gameCode: state.gameCode,
     players: state.players,
-    currentPlayer: state.currentPlayer
+    currentPlayer: state.currentPlayer,
+    situation: state.situation.prompts,
   }
 }
 
