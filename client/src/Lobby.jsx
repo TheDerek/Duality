@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {createGame,joinGame,reportGameStatus,GAME_STATUS} from "./actions";
+import {createGame,joinGame,reportErrors,disableInput} from "./actions";
 import {connect} from "react-redux";
 import Errors from "./Errors"
 
@@ -16,7 +16,8 @@ class Lobby extends React.Component {
     this.state = {
       playerName: this.props.presetValues.name,
       gameCode: this.props.presetValues.gameCode,
-      alert: ""
+      alert: "",
+      statusText: null,
     };
   }
 
@@ -77,10 +78,11 @@ class Lobby extends React.Component {
 
     let errored = errors.length > 0;
 
-    this.props.reportGameStatus(
-      errored ? GAME_STATUS.ERRORED : GAME_STATUS.NORMAL,
-      errors
-    );
+    if (errored) {
+      this.props.reportErrors(
+        errors
+      );
+    }
 
     return !errored;
   }
@@ -91,8 +93,6 @@ class Lobby extends React.Component {
     if (!this.validateForm(false)) {
       return;
     }
-
-    this.props.reportGameStatus(GAME_STATUS.CREATING_GAME);
 
     console.log("Successfully validated, creating game");
     this.props.createGame(this.state.playerName, this.props.uuid);
@@ -105,38 +105,15 @@ class Lobby extends React.Component {
       return;
     }
 
-    this.props.reportGameStatus(GAME_STATUS.JOINING_GAME);
-
     console.log("Successfully validated, joining game", this.state.gameCode);
     this.props.joinGame(this.state.playerName, this.state.gameCode, this.props.uuid);
   };
-
-  getAlert() {
-    const status = this.props.status;
-
-    if (status === GAME_STATUS.CREATING_GAME) {
-      return <Alert text="Creating game..."/>;
-    }
-
-    if (status === GAME_STATUS.JOINING_GAME) {
-      return <Alert text="Joining game..."/>;
-    }
-
-    return null;
-  }
-
-  isFormDisabled() {
-    return this.props.status === GAME_STATUS.JOINING_GAME
-      || this.props.status === GAME_STATUS.CREATING_GAME;
-  }
 
   render() {
     let errorDisplay = null;
     if (this.props.errors) {
       errorDisplay = <Errors errors={this.props.errors}/>;
     }
-
-    let alert = this.getAlert();
 
     let gameCodeWarning = null;
     if (this.state.gameCode) {
@@ -149,7 +126,7 @@ class Lobby extends React.Component {
       <div className="card mt-3">
         <div className="card-header">Lobby</div>
         <div className="card-body">
-          {alert}
+          <Alert statusText={this.state.statusText}/>
           {errorDisplay}
           <form onSubmit={this.handleDummySubmit}>
             <div className="mb-4">
@@ -158,7 +135,7 @@ class Lobby extends React.Component {
                 name="playerName"
                 value={this.state.playerName}
                 onChange={this.handleChange}
-                disabled={this.isFormDisabled()}
+                disabled={this.props.inputDisabled}
                 maxLength={this.NAME_MAX_LENGTH}
                 type="text"
                 className="form-control"
@@ -171,14 +148,14 @@ class Lobby extends React.Component {
                   name="gameCode"
                   value={this.state.gameCode}
                   onChange={this.handleChange}
-                  disabled={this.isFormDisabled()}
+                  disabled={this.props.inputDisabled}
                   maxLength={this.GAME_CODE_LENGTH}
                   type="text"
                   className="form-control text-uppercase"
                   placeholder="BIGBAL" />
                 <button
                   onClick={this.handleJoinGame}
-                  disabled={this.isFormDisabled()}
+                  disabled={this.state.gameCode.length < 5 || this.props.inputDisabled}
                   className="btn btn-secondary">
                   Join game
                 </button>
@@ -190,7 +167,7 @@ class Lobby extends React.Component {
                 { gameCodeWarning }
                 <button
                   onClick={this.handleCreatePrivateGame}
-                  disabled={this.isFormDisabled() || this.state.gameCode}
+                  disabled={this.props.inputDisabled || this.state.gameCode}
                   className="btn btn-primary btn-block">
                   Create new game
                 </button>
@@ -204,11 +181,15 @@ class Lobby extends React.Component {
 }
 
 function Alert(props) {
-  return (
-    <div className="alert alert-primary">
-      {props.text}
-    </div>
-  )
+  if (props.statusText) {
+    return (
+      <div className="alert alert-primary">
+        {props.text}
+      </div>
+    )
+  }
+
+  return null;
 }
 
 function mapStateToProps(state) {
@@ -216,14 +197,15 @@ function mapStateToProps(state) {
     errors: state.errors,
     status: state.status,
     presetValues: state.presetLobbyFormValues,
-    uuid: state.uuid
+    uuid: state.uuid,
+    inputDisabled: state.inputDisabled,
   }
 }
 
 const mapDispatchToProps = {
   createGame,
   joinGame,
-  reportGameStatus: reportGameStatus
+  reportErrors
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Lobby);

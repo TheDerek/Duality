@@ -10,7 +10,7 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 import './index.css'
 import App from "./App"
 import { GAME_STATES } from "./App";
-import {DISABLE_INPUT, GAME_STATUS, REPORT_STATUS} from "./actions";
+import {DISABLE_INPUT, REPORT_ERRORS} from "./actions";
 
 export const LOCAL_STORAGE_PLAYER_NAME = "playerNameValue";
 export const LOCAL_STORAGE_GAME_CODE = "gameCodeValue";
@@ -34,7 +34,6 @@ function getInitialState() {
     currentPlayer: null,
     promptSubmissionNumber: 1,
     currentDrawing: null,
-    status: GAME_STATUS.NORMAL,
     drawingPrompts: [],
     drawing: null,
     inputDisabled: false,
@@ -48,8 +47,8 @@ function messageReducer(state, name, data) {
       console.error(data);
       return {
           ...state,
-          status: GAME_STATUS.ERRORED,
-          errors: [data.userMessage]
+          errors: [data.userMessage],
+          inputDisabled: false,
         };
     }
     case "joinGame": {
@@ -62,7 +61,8 @@ function messageReducer(state, name, data) {
         currentPlayer: data.currentPlayer,
         drawingPrompts: data.drawingPrompts,
         drawing: data.drawing,
-        assignedPrompts: data.assignedPrompts
+        assignedPrompts: data.assignedPrompts,
+        errors: [],
       };
     }
     case "playerJoinedGame": {
@@ -80,6 +80,7 @@ function messageReducer(state, name, data) {
         ...state,
         gameState: data.gameState,
         inputDisabled: false,
+        errors: [],
       };
     }
     case "updatePlayer": {
@@ -132,6 +133,7 @@ function messageReducer(state, name, data) {
         currentPlayer: data.currentPlayer,
         gameState: data.gameState,
         inputDisabled: false,
+        errors: [],
       }
     }
     default:
@@ -160,11 +162,11 @@ function reducer(state = getInitialState(), action) {
       console.log("Got data from websocket", data);
 
       return messageReducer(state, name, data[name]);
-    case REPORT_STATUS:
+    case REPORT_ERRORS:
       console.log("Setting lobby status");
       return {
         ...state,
-        status: action.status,
+        inputDisabled: false,
         errors: action.errors
       };
     case DISABLE_INPUT:

@@ -1,7 +1,7 @@
 import React from "react";
 import {connect} from "react-redux";
 
-import {GAME_STATUS, submitPrompt} from "./actions";
+import {submitPrompt} from "./actions";
 import Errors from "./Errors"
 
 class SubmitPrompts extends React.Component {
@@ -54,7 +54,7 @@ class SubmitPrompts extends React.Component {
   };
 
   isSubmitting = () => {
-    return this.props.status === GAME_STATUS.SUBMITTING_PROMPT;
+    return false;// this.props.status === GAME_STATUS.SUBMITTING_PROMPT;
   };
 
   getStatusText = () => {
