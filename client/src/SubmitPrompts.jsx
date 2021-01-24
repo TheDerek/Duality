@@ -81,16 +81,6 @@ class SubmitPrompts extends React.Component {
   render() {
     return (
       <div>
-        <div className="card">
-          <div className="card-body">
-            <div className="progress">
-              <div className="progress-bar" role="progressbar" style={{width: "25%"}}/>
-            </div>
-            <p className="mt-2 mb-0">
-              <em>Remaining time: <span className="ps-1">5 seconds</span></em>
-            </p>
-          </div>
-        </div>
         <div className="card mt-4">
           <div className="card-body">
             <h5 className="card-title mb-3">
