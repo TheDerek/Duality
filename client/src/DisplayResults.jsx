@@ -85,7 +85,7 @@ function Drawing(props) {
   });
 
   return (
-    <animated.img style={animation} className="w-100 game-img" src={props.drawing}/>
+    <animated.img style={animation} className="w-100 game-img bg-white" src={props.drawing}/>
   )
 }
 
@@ -114,7 +114,7 @@ class DisplayResults extends React.Component {
 
     return (
       <div>
-        <h3 className="text-center mb-3">{ this.props.situation }</h3>
+        <h3 className="text-center mb-3 text-white">{ this.props.situation }</h3>
         <div className="row">
           <div className="col-sm">
             <Drawing drawing={this.props.drawing}/>

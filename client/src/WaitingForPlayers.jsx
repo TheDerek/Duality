@@ -27,7 +27,7 @@ function Players(props) {
 function WaitingForPlayers(props) {
   return (
     <div>
-      <h3 className="mb-4 text-center">
+      <h3 className="mb-4 text-center text-white">
         Waiting for players<br/>
       </h3>
       <div className="card-group mt-4">

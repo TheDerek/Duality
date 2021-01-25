@@ -83,7 +83,7 @@ class SubmitPrompts extends React.Component {
       <div>
         <div className="card mt-4">
           <div className="card-body">
-            <h5 className="card-title mb-3">
+            <h5 className="card-title mb-4">
               { this.props.situation }
             </h5>
             <Errors errors={this.props.errors}/>

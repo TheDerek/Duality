@@ -1,3 +1,9 @@
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+
 .text-uppercase {
     text-transform: uppercase;
 }
@@ -11,7 +17,8 @@
     image-rendering: -moz-crisp-edges;
 }
 
-html, body {
-    max-width: 100%;
-    overflow-x: hidden;
+.card {
+    border-radius: 0;
+    border: 0;
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
 }

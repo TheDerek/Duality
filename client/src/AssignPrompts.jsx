@@ -35,10 +35,10 @@ class AssignPrompts extends React.Component {
   render() {
     return (
       <div>
-        <h3 className="text-center">{ this.props.situation }</h3>
+        <h3 className="text-center text-white mb-3">{ this.props.situation }</h3>
         <div className="text-center mb-4">
           <img
-            className="border mw-100"
+            className="mw-100 bg-white"
             src={ this.props.drawing }
             />
         </div>

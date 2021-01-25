@@ -131,11 +131,13 @@ class DisplayScores extends React.Component {
 
   render() {
     return (
-      <div>
-        <h3 className="text-center mb-3">{ this.getTitle() }</h3>
-        <div className="d-grid">
-          <Scores players={this.props.players} onFinishedAnimation={this.onFinishedAnimation}/>
-          { this.getButton() }
+      <div className="card">
+        <div className="card-body">
+          <h3 className="text-center mb-3">{ this.getTitle() }</h3>
+          <div className="d-grid">
+            <Scores players={this.props.players} onFinishedAnimation={this.onFinishedAnimation}/>
+            { this.getButton() }
+          </div>
         </div>
       </div>
     )

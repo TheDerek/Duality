@@ -45,15 +45,31 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <nav className="navbar navbar-light bg-light mb-4">
-          <div className="container-fluid game-container">
-            <span className="navbar-brand mb-0 h1">Duality</span>
-            { this.getGameCode() }
+        <div className="area">
+          <div className="content">
+            <nav className="navbar navbar-light bg-light mb-4 shadow-sm">
+              <div className="container-fluid game-container">
+                <span className="navbar-brand mb-0 h1">Duality</span>
+                { this.getGameCode() }
+              </div>
+            </nav>
+            <div className="container-md game-container">
+              { this.getGameState() }
+            </div>
           </div>
-        </nav>
-        <div className="container-md game-container">
-          { this.getGameState() }
         </div>
+        <ul className="circles">
+          <li></li>
+          <li></li>
+          <li></li>
+          <li></li>
+          <li></li>
+          <li></li>
+          <li></li>
+          <li></li>
+          <li></li>
+          <li></li>
+        </ul>
       </div>
     )
   }
