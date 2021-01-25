@@ -42,7 +42,7 @@ class WaitingRoom extends React.Component {
         </div>
         <div className="card-body">
           <Errors errors={this.props.errors}/>
-          <h4 className="card-title">Big Boss Battle</h4>
+          <h4 className="card-title">Duality</h4>
           <p className="card-text">
             The fun party game in which you test your friends knowledge and try
             to predict their responses!
