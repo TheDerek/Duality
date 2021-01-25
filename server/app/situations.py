@@ -42,6 +42,18 @@ SITUATIONS: List[Situation] = [
         " your greatest discovery is _.",
         "During a trip to the British Museum you come across an exhibit that depicts both _ and _. Draw what this"
         " exhibit looks like.",
-        "What wonders does this museum exhibit depict?"
+        "What wonders does this museum exhibit depict?",
     ),
+    Situation(
+        "You managed to win a radio competition for an all expenses paid holiday. To your dismay you discover that the"
+        " location of the holiday is in fact _",
+        "Draw a tourist that would be equally welcome in both _ and _.",
+        "Where is this tourist going to?"
+    ),
+    Situation(
+        "As a world renowned fighter there is little you are afraid of. However just the mere thought of _ puts you on"
+        " edge.",
+        "Draw someone scared of both _ and _.",
+        "What is this person afraid of?"
+    )
 ]
