@@ -15,7 +15,7 @@ export const LOCAL_STORAGE_PLAYER_NAME = "playerNameValue";
 export const LOCAL_STORAGE_GAME_CODE = "gameCodeValue";
 export const LOCAL_STORAGE_UUID = "uuid";
 
-const WEBSOCKET_ADDRESS = 'ws://localhost:6789';
+const WEBSOCKET_ADDRESS = process.env.REACT_APP_SERVER_ADDRESS;
 
 const reduxWebsocketMiddleware = reduxWebsocket({
   reconnectOnClose: true,
