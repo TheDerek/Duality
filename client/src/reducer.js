@@ -117,8 +117,6 @@ function messageReducer(state, name, data) {
 }
 
 export function reducer(state = getInitialState(), action) {
-  console.log('reducer', state, action);
-
   switch(action.type) {
     case 'REDUX_WEBSOCKET::CLOSED':
     case 'REDUX_WEBSOCKET::BROKEN':
@@ -134,7 +132,6 @@ export function reducer(state = getInitialState(), action) {
     case 'REDUX_WEBSOCKET::MESSAGE':
       const data = JSON.parse(action.payload.message);
       const name = Object.keys(data)[0];
-      console.log("Got data from websocket", data);
 
       return messageReducer(state, name, data[name]);
     case REPORT_ERRORS:
