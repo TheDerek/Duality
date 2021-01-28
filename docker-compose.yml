@@ -6,3 +6,10 @@ services:
       - ./client/build:/usr/share/nginx/html
     ports:
       - "80:80"
+  server:
+    build: ./server
+    volumes:
+      - ./server:/workarea
+      - ./database:/database
+    ports:
+      - "0.0.0.0:6789:6789"
