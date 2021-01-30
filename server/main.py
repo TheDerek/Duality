@@ -32,29 +32,32 @@ async def producer_handler(websocket, path):
 
 
 async def consumer_handler(websocket, path):
-    async for message in websocket:
-        request = json.loads(message)
-        name, data = next(iter(request.items()))
+    try:
+        async for message in websocket:
+            request = json.loads(message)
+            name, data = next(iter(request.items()))
 
-        if name not in request_dispatcher.requests:
-            print(f"ERROR: No handler for {name} request")
-            continue
+            if name not in request_dispatcher.requests:
+                print(f"ERROR: No handler for {name} request")
+                continue
 
-        print("Received request: ", request)
+            print("Received request: ", request)
 
-        try:
-            await request_dispatcher.requests[name](websocket, data)
-        except Exception as e:
-            # Can't quite figure out how catching async exceptions work, this is a hack
-            # to catch RequestExceptions until I can figure out something better
-            if hasattr(e, "_type"):
-                print(str(e._type) + ": " + str(e))
-                await request_dispatcher.add_to_message_queue(
-                    websocket,
-                    e.get_error_response()
-                )
-            else:
-                raise
+            try:
+                await request_dispatcher.requests[name](websocket, data)
+            except Exception as e:
+                # Can't quite figure out how catching async exceptions work, this is a hack
+                # to catch RequestExceptions until I can figure out something better
+                if hasattr(e, "_type"):
+                    print(str(e._type) + ": " + str(e))
+                    await request_dispatcher.add_to_message_queue(
+                        websocket,
+                        e.get_error_response()
+                    )
+                else:
+                    raise
+    except websockets.ConnectionClosedError as e:
+        print(f"Connection closed with client {websocket} forcefully")
 
 
 async def handler(websocket: WebClient, path: str):

@@ -103,7 +103,7 @@ class Store:
         # temp_dir = tempfile.gettempdir()
         # temp_path = os.path.join(temp_dir, 'db.sqlite3')
         # shutil.copy2(path, temp_path)
-
+        #
         self._db: sqlite3.Connection = sqlite3.connect(
             path
         )

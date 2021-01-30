@@ -49,6 +49,14 @@ def _get_drawing_prompts(player: Player, prompts: List[Prompt]) -> List[Prompt]:
     drawing_prompts: List[Prompt] = []
     drawing_prompts_player_ids = set()
     prompts_copy = list(prompts)
+
+    # If we only have two prompts left then we have to return both of them even if they
+    # were both submitted by the same person. This is due to a flaw in the code below that
+    # sometimes results in the last two prompts left being from the same person
+    if len(prompts) == constants.NUMBER_OF_PROMPTS_PER_USER:
+        prompts.clear()
+        return prompts_copy
+
     for prompt in prompts_copy:
         if (prompt.player_id != player.id_) and (
             prompt.player_id not in drawing_prompts_player_ids
