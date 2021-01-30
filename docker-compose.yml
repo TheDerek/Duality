@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.6"
 services:
   client:
     image: nginx
@@ -6,6 +6,7 @@ services:
       - ./client/build:/usr/share/nginx/html
     ports:
       - "80:80"
+    restart: always
   server:
     build: ./server
     volumes:
@@ -13,3 +14,4 @@ services:
       - ./database:/database
     ports:
       - "0.0.0.0:6789:6789"
+    restart: always
